@@ -50,28 +50,28 @@ namespace Ogama.Modules.ImportExport.RawData
     /// <summary>
     ///   List to fill with imported and filtered <see cref="RawData" />
     /// </summary>
-    private static readonly List<RawData> RawDataList;
+    protected static readonly List<RawData> RawDataList;
 
     /// <summary>
     ///   List to fill with generated <see cref="SubjectsData" />
     /// </summary>
-    private static readonly List<SubjectsData> SubjectList;
+    protected static readonly List<SubjectsData> SubjectList;
 
     /// <summary>
     ///   List to fill with generated or imported <see cref="TrialsData" />
     /// </summary>
-    private static readonly List<TrialsData> TrialList;
+    protected static readonly List<TrialsData> TrialList;
 
     /// <summary>
     ///   Saves the ASCII file import specialized settings
     ///   during this import session.
     /// </summary>
-    private static ASCIISettings asciiSetting;
+    protected static ASCIISettings asciiSetting;
 
     /// <summary>
     ///   Saves the specialized settings used during this import session.
     /// </summary>
-    private static DetectionSettings detectionSetting;
+    protected static DetectionSettings detectionSetting;
 
     #endregion
 

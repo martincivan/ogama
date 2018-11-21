@@ -27,6 +27,7 @@ namespace Ogama.Modules.Database
   using Ogama.Modules.Common.Tools;
   using Ogama.Modules.ImportExport.OgamaData;
   using Ogama.Modules.ImportExport.RawData;
+    using Ogama.Modules.ImportExport.UXI;
 
   /// <summary>
   /// Derived from <see cref="FormWithAccellerators"/>.
@@ -1852,6 +1853,12 @@ namespace Ogama.Modules.Database
       ////    }
     }
 
-    #endregion //HELPER
-  }
+        #endregion //HELPER
+
+        private void uxImport_Click(object sender, EventArgs e)
+        {
+            UXImport.Start((MainForm)this.MdiParent);
+            ((MainForm)this.MdiParent).RefreshContextPanelSubjects();
+        }
+    }
 }
