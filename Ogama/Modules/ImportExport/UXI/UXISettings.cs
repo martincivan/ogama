@@ -37,8 +37,10 @@ namespace Ogama.Modules.ImportExport.UXI
         ///////////////////////////////////////////////////////////////////////////////
         #region CONSTANTS
         private const string SETTINGS_FILE = "settings";
-        private const string ETDATA_FILE = "ET_DATA";
-        private const string MEDATA_FILE = "ME_DATA";
+        private const string ETSTATES_FILE = "ET_states";
+        private const string SCSTATES_FILE = "SC_states";
+        private const string ETDATA_FILE = "ET_data";
+        private const string MEDATA_FILE = "ME_data";
         #endregion //CONSTANTS
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -555,17 +557,27 @@ namespace Ogama.Modules.ImportExport.UXI
 
         public dynamic GetSettings()
         {
-            return new JavaScriptSerializer().Deserialize<dynamic>(new StreamReader(folder + SETTINGS_FILE + ".json").ReadToEnd());
+            return new JavaScriptSerializer().Deserialize<dynamic>(new StreamReader(folder + "\\" + SETTINGS_FILE + ".json").ReadToEnd());
+        }
+
+        public dynamic GetScreenCaptureStates()
+        {
+            return new JavaScriptSerializer().Deserialize<dynamic>(new StreamReader(folder + "\\" + SCSTATES_FILE + ".json").ReadToEnd());
+        }
+
+        public dynamic GetEyeTrackerStates()
+        {
+            return new JavaScriptSerializer().Deserialize<dynamic>(new StreamReader(folder + "\\" + ETSTATES_FILE + ".json").ReadToEnd());
         }
 
         public string GetETDataPath()
         {
-            return folder + ETDATA_FILE + ".json";
+            return folder + "\\" + ETDATA_FILE + ".json";
         }
 
         public string GetMEDataPath()
         {
-            return folder + MEDATA_FILE + ".json";
+            return folder + "\\" + MEDATA_FILE + ".json";
         }
 
         #endregion //PUBLICMETHODS

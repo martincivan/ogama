@@ -1,4 +1,7 @@
 ﻿
+using System.Data.Entity.Core.Common.EntitySql;
+using System.Windows.Forms.VisualStyles;
+
 namespace Ogama.Modules.ImportExport.UXI
 {
     using Ogama.ExceptionHandling;
@@ -75,6 +78,8 @@ namespace Ogama.Modules.ImportExport.UXI
         ///   Saves the specialized settings used during this import session.
         /// </summary>
         protected static DetectionSettings detectionSetting;
+
+        private static MainForm mainWindowCache;
 
         #endregion
 
@@ -387,17 +392,35 @@ namespace Ogama.Modules.ImportExport.UXI
         /// </param>
         public static void Start(MainForm mainWindow)
         {
+//            try
+//            {
+            mainWindowCache = mainWindow;
+
+//                var folderBrowser = new FolderBrowserDialog();
+//                if (folderBrowser.ShowDialog() != DialogResult.OK)
+//                {
+//                    return;
+//                }
+//                asciiSetting.Folder = folderBrowser.SelectedPath + "/";
+
+            var dialog = new UXImportDialog();
+            dialog.ShowDialog();
+        }
+
+        public static Boolean CheckFolder(Object dir)
+        {
+            if (!File.Exists(dir + "\\settings.json"))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static void Run(Object dir)
+        {
             try
             {
-                asciiSetting = new UXISettings();
-                detectionSetting = new DetectionSettings();
-
-                var folderBrowser = new FolderBrowserDialog();
-                if (folderBrowser.ShowDialog() != DialogResult.OK)
-                {
-                    return;
-                }
-                asciiSetting.Folder = folderBrowser.SelectedPath + "/";
                 //OpenFile:
                 //    detectionSetting.ImportType = ImportTypes.Rawdata;
                 //        var objfrmImportReadFile = new ImportParseFileDialog(ref asciiSetting);
@@ -437,6 +460,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 // Give some time to show the splash ...
                 Application.DoEvents();
 
+                asciiSetting = new UXISettings();
+                detectionSetting = new DetectionSettings();
+                asciiSetting.Folder = (string) dir;
+
                 // Read log file again, but complete
                 GenerateOgamaRawDataList(-1);
 
@@ -447,10 +474,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 bool successful = SaveImportIntoTablesAndDB();
 
                 // Create slideshow trials
-                GenerateOgamaSlideshowTrials(detectionSetting, mainWindow);
+                GenerateOgamaSlideshowTrials(detectionSetting, mainWindowCache);
 
                 // Calculate Fixations
-                CalculateFixations(mainWindow);
+                CalculateFixations(mainWindowCache);
 
                 // Clear lists
                 SubjectList.Clear();
@@ -461,19 +488,19 @@ namespace Ogama.Modules.ImportExport.UXI
                 asciiSetting.WaitingSplash.CancelAsync();
 
                 // Inform user about success.
-                if (successful)
-                {
-                    string message = "Import data successfully written to database." + Environment.NewLine
-                                     + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
-                                     + "of the experiment, otherwise no images will be shown.";
-                    ExceptionMethods.ProcessMessage("Success", message);
-                }
-                else
-                {
-                    string message = "Import had errors. Some or all of the import data "
-                                     + "could not be written the database.";
-                    ExceptionMethods.ProcessErrorMessage(message);
-                }
+//                if (successful)
+//                {
+//                    string message = "Import data successfully written to database." + Environment.NewLine
+//                                     + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
+//                                     + "of the experiment, otherwise no images will be shown.";
+//                    ExceptionMethods.ProcessMessage("Success", message);
+//                }
+//                else
+//                {
+//                    string message = "Import had errors. Some or all of the import data "
+//                                     + "could not be written the database.";
+//                    ExceptionMethods.ProcessErrorMessage(message);
+//                }
                 //}
                 //else if (resultImages == DialogResult.Cancel)
                 //{
@@ -647,40 +674,6 @@ namespace Ogama.Modules.ImportExport.UXI
         #region Methods
 
         /// <summary>
-        ///   This method shows a dialog, that gives the option
-        ///   to use a import settings file during import.
-        /// </summary>
-        /// <remarks>
-        ///   This functionality is extremely useful, when multiple log
-        ///   files of the same type should be imported.
-        /// </remarks>
-        private static void AskforUsingSettingsFile()
-        {
-            if (MessageBox.Show(
-              "Would you like to use a settings file ?",
-              Application.ProductName,
-              MessageBoxButtons.YesNo,
-              MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                var ofdOpenSettings = new OpenFileDialog();
-                ofdOpenSettings.DefaultExt = "ois";
-                ofdOpenSettings.FileName = "*.ois";
-                ofdOpenSettings.FilterIndex = 1;
-
-                // ofdOpenSettings.InitialDirectory = Properties.Settings.Default.ImportSettingsPath;
-                ofdOpenSettings.Filter = "Ogama import settings files|*.ois";
-                ofdOpenSettings.Title = "Please select import settings file ...";
-                if (ofdOpenSettings.ShowDialog() == DialogResult.OK)
-                {
-                    string settingsFilename = ofdOpenSettings.FileName;
-                    DeserializeSettings(settingsFilename);
-                    detectionSetting.SubjectName = "Subject1";
-                    detectionSetting.SavedSettings = true;
-                }
-            }
-        }
-
-        /// <summary>
         /// This method calculates the fixations for the subjects
         ///   that are currently imported.
         /// </summary>
@@ -744,6 +737,29 @@ namespace Ogama.Modules.ImportExport.UXI
             return true;
         }
 
+        private static DateTime GetStartTime()
+        {
+            dynamic states = null;
+            try
+            {
+                states = ASCIISettings.GetScreenCaptureStates();
+            }
+            catch (Exception e)
+            {
+                states = ASCIISettings.GetEyeTrackerStates();
+            }
+
+            foreach (var state in states)
+            {
+                if (state["State"] == "Recording")
+                {
+                    return DateTime.Parse(state["Timestamp"]);
+                }
+            }
+
+            throw new System.MissingFieldException("Recording state timestamp not found");
+        }
+
         /// <summary>
         /// Generate the list of raw data under the current
         ///   parsing conditions.
@@ -789,32 +805,16 @@ namespace Ogama.Modules.ImportExport.UXI
             int currentTrialSequence = 0;
             bool isLastTrial = false;
             string lastSubjectName = "#";
-            string currentSubjectName = "#";
+            string currentSubjectName = Path.GetFileName(asciiSetting.Folder);
             SortedList<int, long> trial2Time = detectionSetting.TrialSequenceToStarttimeAssignments;
             if (trial2Time.Count > 0)
             {
                 currentTrialSequence = trial2Time.Keys[0];
             }
-            // Create Ogama columns placeholder
-            DateTime started = DateTime.Parse("2010.01.01");
-            DateTime finished = DateTime.Parse("2010.01.02");
+            DateTime started = GetStartTime();
             DateTimeOffset startedOffset = new DateTimeOffset(started.ToUniversalTime());
             long startedmilis = startedOffset.ToUnixTimeMilliseconds();
-            try
-            {
-                var settings = asciiSetting.GetSettings();
-                started = DateTime.Parse(settings[0]["Session"]["StartedAt"]);
-                finished = DateTime.Parse(settings[0]["Session"]["FinishedAt"]);
-                currentSubjectName = settings[0]["Session"]["Id"];
-                currentSubjectName = settings[0]["User"]["Name"];
-            }
-            catch (Exception)
-            {
-                if (currentSubjectName == "#")
-                {
-                    currentSubjectName = "Import";
-                }
-            }
+
             detectionSetting.SubjectName = currentSubjectName;
             detectionSetting.TimeFactor = 1;
             detectionSetting.ImportType = ImportTypes.Rawdata;
@@ -839,9 +839,12 @@ namespace Ogama.Modules.ImportExport.UXI
                     eyeIndex = "LeftEye";
                 }
                 dynamic gazeData = record[eyeIndex];
-                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * 1920;
+                
+                //                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * 1920;
+                newRawData.GazePosX = (float)gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
                 //newRawData.GazePosX *= 1920;
-                newRawData.GazePosY = (float) gazeData["GazePoint2D"]["Y"] * 1080;
+//                newRawData.GazePosY = (float) gazeData["GazePoint2D"]["Y"] * 1080;
+                newRawData.GazePosY = (float)gazeData["GazePoint2D"]["Y"] * Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
                 //newRawData.GazePosY *= 1080; 
                 newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
                 newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
