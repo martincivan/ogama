@@ -1,5 +1,7 @@
 ﻿
 using System.Data.Entity.Core.Common.EntitySql;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows.Forms.VisualStyles;
 
 namespace Ogama.Modules.ImportExport.UXI
@@ -41,7 +43,7 @@ namespace Ogama.Modules.ImportExport.UXI
         ///////////////////////////////////////////////////////////////////////////////
         // Defining Constants                                                        //
         ///////////////////////////////////////////////////////////////////////////////
-
+        
 
         private const string BOTH = "Both";
         private const string RIGHT = "Right";
@@ -392,29 +394,51 @@ namespace Ogama.Modules.ImportExport.UXI
         /// </param>
         public static void Start(MainForm mainWindow)
         {
-//            try
-//            {
             mainWindowCache = mainWindow;
 
-//                var folderBrowser = new FolderBrowserDialog();
-//                if (folderBrowser.ShowDialog() != DialogResult.OK)
-//                {
-//                    return;
-//                }
-//                asciiSetting.Folder = folderBrowser.SelectedPath + "/";
+            var folderBrowser = new FolderBrowserDialog();
+            if (folderBrowser.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+            asciiSetting.Folder = folderBrowser.SelectedPath;
+            var folders = CreateFolderList(asciiSetting.Folder);
+            if (folders.Count == 0)
+            {
+                MessageBox.Show("No projects have been found in selected folder and folders inside it.", "Project not found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
             var dialog = new UXImportDialog();
+            dialog.setDirectories(folders);
             dialog.ShowDialog();
         }
 
-        public static Boolean CheckFolder(Object dir)
+        public static List<String> CreateFolderList(Object d)
         {
-            if (!File.Exists(dir + "\\settings.json"))
-            {
-                return false;
-            }
+            List<String> result = new List<string>();
 
-            return true;
+            if (CheckDirectory((String) d))
+            {
+                result.Add((String) d);
+            }
+            foreach (String dir in Directory.EnumerateDirectories((String) d))
+            {
+                if (UXImport.CheckDirectory(dir))
+                {
+                    result.Add((String) dir);
+                }
+                else
+                {
+                    result = result.Concat(CreateFolderList(dir)).ToList();
+                }
+            }
+            return result;
+        }
+
+        public static bool CheckDirectory(String dir)
+        {
+            return File.Exists(dir + "\\settings.json");
         }
 
         public static void Run(Object dir)
@@ -806,6 +830,15 @@ namespace Ogama.Modules.ImportExport.UXI
             bool isLastTrial = false;
             string lastSubjectName = "#";
             string currentSubjectName = Path.GetFileName(asciiSetting.Folder);
+
+            if (!Char.IsLetter(currentSubjectName[0]))
+            {
+                currentSubjectName = "I" + currentSubjectName;
+            }
+
+            Regex rgx = new Regex("[^a-zA-Z0-9]");
+            currentSubjectName = rgx.Replace(currentSubjectName, "");
+
             SortedList<int, long> trial2Time = detectionSetting.TrialSequenceToStarttimeAssignments;
             if (trial2Time.Count > 0)
             {
@@ -841,10 +874,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 dynamic gazeData = record[eyeIndex];
                 
                 //                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * 1920;
-                newRawData.GazePosX = (float)gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
+                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
                 //newRawData.GazePosX *= 1920;
 //                newRawData.GazePosY = (float) gazeData["GazePoint2D"]["Y"] * 1080;
-                newRawData.GazePosY = (float)gazeData["GazePoint2D"]["Y"] * Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
+                newRawData.GazePosY = (float ) gazeData["GazePoint2D"]["Y"] * Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
                 //newRawData.GazePosY *= 1080; 
                 newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
                 newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
