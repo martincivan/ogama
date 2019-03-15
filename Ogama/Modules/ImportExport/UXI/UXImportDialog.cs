@@ -8,10 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Threading;
 using Ogama.ExceptionHandling;
 
 namespace Ogama.Modules.ImportExport.UXI
 {
+    public delegate void CloseDelagate();
     public partial class UXImportDialog : Form
     {
         public UXImportDialog()
@@ -30,31 +32,34 @@ namespace Ogama.Modules.ImportExport.UXI
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
-            progressBar1.Minimum = 0;
-            progressBar1.Maximum = 0;
+            ProgressForm form = new ProgressForm();
+            form.Show();
+            List<String> valueList = new List<string>();
             foreach (DataGridViewRow value in directoriesView.Rows)
             {
                 if (value.Cells[0].Value == "True")
                 {
-                    progressBar1.Maximum++;
+                    valueList.Add((String) value.Cells[1].Value);
                 }
             }
-
-            progressBar1.Value = 0;
-            foreach (DataGridViewRow value in directoriesView.Rows)
+            form.setMaximum(valueList.Count);
+            IProgress<int> p = new Progress<int>(v =>
             {
-                if (value.Cells[0].Value == "True")
-                {
-                    UXImport.Run(value.Cells[1].Value);
-                    progressBar1.Value++;
-                }
-            }
-            string message = "Import data successfully written to database." + Environment.NewLine
-                                     + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
-                                     + "of the experiment, otherwise no images will be shown.";
-            ExceptionMethods.ProcessMessage("Success", message);
+                form.setProgress(v);
+                UXImport.mainWindowCache.RefreshContextPanelImageTabs();
+                UXImport.mainWindowCache.RefreshContextPanelSubjects();
+            });
+            IProgress<int> k = new Progress<int>(v => form.Close());
+            var tokenSource = new CancellationTokenSource();
+            form.setTask(tokenSource);
+            Task task = new Task(() =>
+            {
+                UXImport.Run(valueList, p, tokenSource.Token);
+                k.Report(1);
+            });
+            task.Start();
         }
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)

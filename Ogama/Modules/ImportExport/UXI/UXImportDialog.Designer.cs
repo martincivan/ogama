@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UXImportDialog));
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.comboBox3 = new System.Windows.Forms.ComboBox();
@@ -44,20 +43,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.directoriesView)).BeginInit();
             this.SuspendLayout();
             // 
-            // progressBar1
-            // 
-            this.progressBar1.Location = new System.Drawing.Point(16, 165);
-            this.progressBar1.Margin = new System.Windows.Forms.Padding(4);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(592, 28);
-            this.progressBar1.TabIndex = 0;
-            // 
             // tableLayoutPanel1
             // 
             this.tableLayoutPanel1.ColumnCount = 3;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.51362F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 75.48638F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
             this.tableLayoutPanel1.Controls.Add(this.comboBox2, 1, 2);
             this.tableLayoutPanel1.Controls.Add(this.comboBox3, 1, 3);
             this.tableLayoutPanel1.Controls.Add(this.checkBox1, 2, 3);
@@ -82,26 +73,26 @@
             "Right",
             "Left",
             "Average"});
-            this.comboBox2.Location = new System.Drawing.Point(129, 66);
+            this.comboBox2.Location = new System.Drawing.Point(128, 66);
             this.comboBox2.Margin = new System.Windows.Forms.Padding(4);
             this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(378, 24);
+            this.comboBox2.Size = new System.Drawing.Size(375, 24);
             this.comboBox2.TabIndex = 8;
             this.comboBox2.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
             // 
             // comboBox3
             // 
             this.comboBox3.FormattingEnabled = true;
-            this.comboBox3.Location = new System.Drawing.Point(129, 96);
+            this.comboBox3.Location = new System.Drawing.Point(128, 96);
             this.comboBox3.Margin = new System.Windows.Forms.Padding(4);
             this.comboBox3.Name = "comboBox3";
-            this.comboBox3.Size = new System.Drawing.Size(378, 24);
+            this.comboBox3.Size = new System.Drawing.Size(375, 24);
             this.comboBox3.TabIndex = 9;
             // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(515, 96);
+            this.checkBox1.Location = new System.Drawing.Point(511, 96);
             this.checkBox1.Margin = new System.Windows.Forms.Padding(4);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(60, 21);
@@ -133,7 +124,7 @@
             // button2
             // 
             this.button2.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button2.Location = new System.Drawing.Point(147, 201);
+            this.button2.Location = new System.Drawing.Point(141, 151);
             this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(380, 28);
@@ -146,14 +137,15 @@
             // 
             this.directoriesView.AllowUserToAddRows = false;
             this.directoriesView.AllowUserToDeleteRows = false;
+            this.directoriesView.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.directoriesView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.directoriesView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Import,
             this.FolderName});
-            this.directoriesView.Location = new System.Drawing.Point(12, 238);
+            this.directoriesView.Location = new System.Drawing.Point(12, 187);
             this.directoriesView.Margin = new System.Windows.Forms.Padding(4);
             this.directoriesView.Name = "directoriesView";
-            this.directoriesView.Size = new System.Drawing.Size(592, 215);
+            this.directoriesView.Size = new System.Drawing.Size(592, 266);
             this.directoriesView.TabIndex = 3;
             // 
             // Import
@@ -178,7 +170,6 @@
             this.Controls.Add(this.directoriesView);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Controls.Add(this.progressBar1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
@@ -192,8 +183,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;

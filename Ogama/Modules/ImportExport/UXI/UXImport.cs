@@ -2,7 +2,9 @@
 using System.Data.Entity.Core.Common.EntitySql;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms.VisualStyles;
+using Newtonsoft.Json;
 
 namespace Ogama.Modules.ImportExport.UXI
 {
@@ -81,7 +83,7 @@ namespace Ogama.Modules.ImportExport.UXI
         /// </summary>
         protected static DetectionSettings detectionSetting;
 
-        private static MainForm mainWindowCache;
+        public static MainForm mainWindowCache;
 
         #endregion
 
@@ -313,7 +315,7 @@ namespace Ogama.Modules.ImportExport.UXI
             }
 
             mainWindow.StatusLabel.Text = "Refreshing context panel ...";
-            mainWindow.RefreshContextPanelImageTabs();
+            //mainWindow.RefreshContextPanelImageTabs();
             mainWindow.StatusLabel.Text = "Ready ...";
             mainWindow.StatusProgressbar.Value = 0;
         }
@@ -441,6 +443,24 @@ namespace Ogama.Modules.ImportExport.UXI
             return File.Exists(dir + "\\settings.json");
         }
 
+        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token)
+        {
+            int p = 0;
+            foreach (String value in values)
+            {
+                Run(value);
+                progress.Report(++p);
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+            }
+            string message = "Import data successfully written to database." + Environment.NewLine
+                                                                             + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
+                                                                             + "of the experiment, otherwise no images will be shown.";
+            ExceptionMethods.ProcessMessage("Success", message);
+        }
+
         public static void Run(Object dir)
         {
             try
@@ -479,7 +499,7 @@ namespace Ogama.Modules.ImportExport.UXI
                 //                        }
 
                 // Show import splash window
-                asciiSetting.WaitingSplash.RunWorkerAsync();
+                //asciiSetting.WaitingSplash.RunWorkerAsync();
 
                 // Give some time to show the splash ...
                 Application.DoEvents();
@@ -857,7 +877,7 @@ namespace Ogama.Modules.ImportExport.UXI
             JavaScriptSerializer deserializer = new JavaScriptSerializer();
             deserializer.MaxJsonLength = 99999999;
             var json = deserializer.Deserialize<dynamic>(ETDataFile.ReadToEnd());
-            
+
             foreach(dynamic record in json)
             {
                 if (Array.IndexOf(VALIDITY_WHITELIST,  record["Validity"]) == -1)
@@ -892,18 +912,18 @@ namespace Ogama.Modules.ImportExport.UXI
             StreamReader MEDataFile = new StreamReader(asciiSetting.GetMEDataPath());
             json = deserializer.Deserialize<dynamic>(MEDataFile.ReadToEnd());
             foreach (dynamic record in json)
-            {
-                var newRawData = new RawData();
-                newRawData.SubjectName = currentSubjectName;
-                DateTime time = DateTime.Parse(record["Timestamp"]);
-                //time.Subtract(started);
-                DateTimeOffset timeOffset = new DateTimeOffset(time);
-                newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
-                newRawData.MousePosX = record["X"];
-                newRawData.MousePosY = record["Y"];
-                RawDataList.Add(newRawData);
+                {
+                    var newRawData = new RawData();
+                    newRawData.SubjectName = currentSubjectName;
+                    DateTime time = DateTime.Parse(record["Timestamp"]);
+                    //time.Subtract(started);
+                    DateTimeOffset timeOffset = new DateTimeOffset(time);
+                    newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                    newRawData.MousePosX = record["X"];
+                    newRawData.MousePosY = record["Y"];
+                    RawDataList.Add(newRawData);
+                }
             }
-    }
 
         /// <summary>
         ///   This method iterates the imported raw data rows to
