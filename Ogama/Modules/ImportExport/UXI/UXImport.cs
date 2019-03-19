@@ -50,7 +50,14 @@ namespace Ogama.Modules.ImportExport.UXI
         private const string BOTH = "Both";
         private const string RIGHT = "Right";
         private const string LEFT = "Left";
+        private const string BUTTON_UP = "ButtonUp";
+        private const string BUTTON_DOWN = "ButtonDown";
+        private const string KEY_UP = "KeyUp";
+        private const string KEY_DOWN = "KeyDown";
+        private const string KEY_PRESS = "KeyPress";
+        private const string MOVE = "Move";
         private static readonly String[] VALIDITY_WHITELIST = { BOTH, LEFT, RIGHT};
+        private static readonly String[] EVENTTYPES_WHITELIST = { BUTTON_DOWN, BUTTON_UP, MOVE };
 
         ///////////////////////////////////////////////////////////////////////////////
         // Defining Variables, Enumerations, Events                                  //
@@ -71,6 +78,11 @@ namespace Ogama.Modules.ImportExport.UXI
         ///   List to fill with generated or imported <see cref="TrialsData" />
         /// </summary>
         protected static readonly List<TrialsData> TrialList;
+
+        /// <summary>
+        /// List to fill with trial event data <see cref="TrialEventsData"/>
+        /// </summary>
+        protected static readonly List<TrialEventsData> EventList;
 
         /// <summary>
         ///   Saves the ASCII file import specialized settings
@@ -100,6 +112,7 @@ namespace Ogama.Modules.ImportExport.UXI
             SubjectList = new List<SubjectsData>();
             TrialList = new List<TrialsData>();
             RawDataList = new List<RawData>();
+            EventList = new List<TrialEventsData>();
 
             detectionSetting = new DetectionSettings();
             asciiSetting = new UXISettings();
@@ -413,6 +426,7 @@ namespace Ogama.Modules.ImportExport.UXI
 
             var dialog = new UXImportDialog();
             dialog.setDirectories(folders);
+            dialog.setPreferredEye("Average");
             dialog.ShowDialog();
         }
 
@@ -443,12 +457,12 @@ namespace Ogama.Modules.ImportExport.UXI
             return File.Exists(dir + "\\settings.json");
         }
 
-        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token)
+        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye)
         {
             int p = 0;
             foreach (String value in values)
             {
-                Run(value);
+                Run(value, preferredEye);
                 progress.Report(++p);
                 if (token.IsCancellationRequested)
                 {
@@ -461,7 +475,7 @@ namespace Ogama.Modules.ImportExport.UXI
             ExceptionMethods.ProcessMessage("Success", message);
         }
 
-        public static void Run(Object dir)
+        public static void Run(Object dir, String pre)
         {
             try
             {
@@ -513,6 +527,8 @@ namespace Ogama.Modules.ImportExport.UXI
 
                 // Generate the trials
                 GenerateOgamaSubjectAndTrialList();
+
+                GenerateKeyboardEventList();
 
                 // Save the import into ogamas database and the mdf file.
                 bool successful = SaveImportIntoTablesAndDB();
@@ -713,6 +729,45 @@ namespace Ogama.Modules.ImportExport.UXI
             //}
         }
 
+        private static void GenerateKeyboardEventList()
+        {
+            long startedmilis = asciiSetting.StartTime;
+            string currentSubjectName = detectionSetting.SubjectName;
+            StreamReader MEDataFile = new StreamReader(asciiSetting.GetKBDataPath());
+            JavaScriptSerializer deserializer = new JavaScriptSerializer();
+            var json = deserializer.Deserialize<dynamic>(MEDataFile.ReadToEnd());
+            SortedList<int, long> trial2Time = detectionSetting.TrialSequenceToStarttimeAssignments;
+            int currentTrialSequence = 0;
+            if (trial2Time.Count > 0)
+            {
+                currentTrialSequence = trial2Time.Keys[0];
+            }
+            foreach (dynamic record in json)
+            {
+                if (record["EventType"] == KEY_PRESS)
+                {
+                    continue;
+                }
+                var newEventData = new TrialEventsData();
+                newEventData.SubjectName = currentSubjectName;
+                newEventData.TrialSequence = currentTrialSequence;
+                DateTime time = DateTime.Parse(record["Timestamp"]);
+                DateTimeOffset timeOffset = new DateTimeOffset(time);
+                newEventData.EventTime = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                newEventData.EventType = "Key";
+                if (record["EventType"] == KEY_UP)
+                {
+                    newEventData.EventTask = "Up";
+                }
+                if (record["EventType"] == KEY_DOWN)
+                {
+                    newEventData.EventTask = "Down";
+                }
+                newEventData.EventParam = "Key: " + record["KeyCode"];
+                EventList.Add(newEventData);
+            }
+        }
+
         #endregion
 
         #region Methods
@@ -821,6 +876,8 @@ namespace Ogama.Modules.ImportExport.UXI
         {
             // Clear existing values
             RawDataList.Clear();
+            EventList.Clear();
+
             double lastTimeInFileTime = -1;
 
             // Retrieve existing slideshow trials (to check matching filenames for 
@@ -871,7 +928,7 @@ namespace Ogama.Modules.ImportExport.UXI
             detectionSetting.SubjectName = currentSubjectName;
             detectionSetting.TimeFactor = 1;
             detectionSetting.ImportType = ImportTypes.Rawdata;
-            asciiSetting.StartTime = started.ToBinary();
+            asciiSetting.StartTime = startedmilis;
 
             StreamReader ETDataFile = new StreamReader(asciiSetting.GetETDataPath());
             JavaScriptSerializer deserializer = new JavaScriptSerializer();
@@ -886,12 +943,23 @@ namespace Ogama.Modules.ImportExport.UXI
                 }
                 var newRawData = new RawData();
                 newRawData.SubjectName = currentSubjectName;
-                string eyeIndex = "RightEye";
-                if (record["Validity"] == "Left")
+                dynamic gazeData = record["RightEye"];
+                if (record["Validity"] == BOTH)
                 {
-                    eyeIndex = "LeftEye";
+                    if (asciiSetting.getPreferredEye() == "Average")
+                    {
+                        gazeData["GazePoint2D"]["X"] = ((double) record["RightEye"]["GazePoint2D"]["X"] + (double) record["LeftEye"]["GazePoint2D"]["X"]) / 2;
+                        gazeData["GazePoint2D"]["Y"] = ((double) record["RightEye"]["GazePoint2D"]["Y"] + (double) record["LeftEye"]["GazePoint2D"]["Y"]) / 2;
+                    }
+                    else
+                    {
+                        gazeData = record[asciiSetting.getPreferredEye() + "Eye"];
+                    }
                 }
-                dynamic gazeData = record[eyeIndex];
+                else
+                {
+                    gazeData = record[record["Validity"] + "Eye"];
+                }
                 
                 //                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * 1920;
                 newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
@@ -912,6 +980,12 @@ namespace Ogama.Modules.ImportExport.UXI
             StreamReader MEDataFile = new StreamReader(asciiSetting.GetMEDataPath());
             json = deserializer.Deserialize<dynamic>(MEDataFile.ReadToEnd());
             foreach (dynamic record in json)
+            {
+                if (Array.IndexOf(EVENTTYPES_WHITELIST, record["EventType"]) == -1)
+                {
+                    continue;
+                }
+                if (record["EventType"] == MOVE)
                 {
                     var newRawData = new RawData();
                     newRawData.SubjectName = currentSubjectName;
@@ -923,7 +997,29 @@ namespace Ogama.Modules.ImportExport.UXI
                     newRawData.MousePosY = record["Y"];
                     RawDataList.Add(newRawData);
                 }
+                else
+                {
+                    var newEventData = new TrialEventsData();
+                    newEventData.SubjectName = currentSubjectName;
+                    newEventData.TrialSequence = currentTrialSequence;
+                    DateTime time = DateTime.Parse(record["Timestamp"]);
+                    DateTimeOffset timeOffset = new DateTimeOffset(time);
+                    newEventData.EventTime = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                    newEventData.EventType = "Mouse";
+                    if (record["EventType"] == BUTTON_UP)
+                    {
+                        newEventData.EventTask = "Up";
+                    }
+                    if (record["EventType"] == BUTTON_DOWN)
+                    {
+                        newEventData.EventTask = "Down";
+                    }
+                    newEventData.EventParam = String.Format("Mouse: {0} ({1},{2})", record["Button"], record["X"], record["Y"]);
+                    EventList.Add(newEventData);
+                }
             }
+            MEDataFile.Close();
+        }
 
         /// <summary>
         ///   This method iterates the imported raw data rows to
@@ -1124,23 +1220,27 @@ namespace Ogama.Modules.ImportExport.UXI
 /// </returns>
 private static bool SaveImportIntoTablesAndDB()
 {
-    Dictionary<string, List<RawData>> rawDataBySubject = SplitRawDataListBySubjects(RawDataList);
-    Dictionary<string, List<TrialsData>> trialDataBySubject = SplitTrialDataListBySubjects(TrialList);
+    //Dictionary<string, List<RawData>> rawDataBySubject = SplitRawDataListBySubjects(RawDataList);
+    //Dictionary<string, List<TrialsData>> trialDataBySubject = SplitTrialDataListBySubjects(TrialList);
     int subjectErrorCounter = 0;
     try
     {
-        foreach (SubjectsData subject in SubjectList)
-        {
+    //    foreach (SubjectsData subject in SubjectList)
+      //  {
+            SubjectsData subject = SubjectList[0];
             string testSub = subject.SubjectName;
             if (!Queries.ValidateSubjectName(ref testSub, false))
             {
-                subjectErrorCounter++;
-                continue;
-            }
+                string message = testSub + " subject has unallowed names or "
+                                                     + "their names already exists in the experiments database." + Environment.NewLine
+                                                     + "Please modify your import file and change the subject name, or delete "
+                                                     + "the existing database entry.";
+                ExceptionMethods.ProcessMessage("Unallowed subject names", message);
+                }
 
-            List<RawData> subjectRawData = rawDataBySubject[subject.SubjectName];
-            List<TrialsData> subjectTrialsData = trialDataBySubject[subject.SubjectName];
-            if (!Queries.WriteRawDataListToDataSet(subject.SubjectName, subjectRawData))
+            //List<RawData> subjectRawData = rawDataBySubject[subject.SubjectName];
+            //List<TrialsData> subjectTrialsData = trialDataBySubject[subject.SubjectName];
+            if (!Queries.WriteRawDataListToDataSet(subject.SubjectName, RawDataList))
             {
                 throw new DataException("The new raw data table could not be written into the dataset.");
             }
@@ -1161,11 +1261,16 @@ private static bool SaveImportIntoTablesAndDB()
             }
 
             // Save trial information to dataset
-            if (!Queries.WriteTrialsDataListToDataSet(subjectTrialsData))
+            if (!Queries.WriteTrialsDataListToDataSet(TrialList))
             {
                 throw new DataException("The new trials table could not be written into the dataset.");
             }
-        }
+
+            if (!Queries.WriteTrialEventsDataListToDataSet(EventList))
+            {
+                throw new DataException("The new trial events could not be written into the dataset.");
+            }
+        //}
 
         Document.ActiveDocument.DocDataSet.EnforceConstraints = false;
 
@@ -1203,16 +1308,6 @@ private static bool SaveImportIntoTablesAndDB()
     finally
     {
         Document.ActiveDocument.DocDataSet.EnforceConstraints = true;
-    }
-
-    if (subjectErrorCounter > 0)
-    {
-        string message = subjectErrorCounter + " subject(s) have unallowed names or "
-                         + "their names already exist in the experiments database." + Environment.NewLine
-                         + "Please modify your import file and change the subject name(s), or delete "
-                         + "the existing database entry.";
-        ExceptionMethods.ProcessMessage("Unallowed subject names", message);
-        return false;
     }
 
     return true;

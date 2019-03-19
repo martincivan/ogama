@@ -30,7 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UXImportDialog));
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.comboBox2 = new System.Windows.Forms.ComboBox();
+            this.preferredEye = new System.Windows.Forms.ComboBox();
             this.comboBox3 = new System.Windows.Forms.ComboBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -48,8 +48,8 @@
             this.tableLayoutPanel1.ColumnCount = 3;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.51362F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 75.48638F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
-            this.tableLayoutPanel1.Controls.Add(this.comboBox2, 1, 2);
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 86F));
+            this.tableLayoutPanel1.Controls.Add(this.preferredEye, 1, 2);
             this.tableLayoutPanel1.Controls.Add(this.comboBox3, 1, 3);
             this.tableLayoutPanel1.Controls.Add(this.checkBox1, 2, 3);
             this.tableLayoutPanel1.Controls.Add(this.label3, 0, 2);
@@ -66,19 +66,19 @@
             this.tableLayoutPanel1.Size = new System.Drawing.Size(592, 128);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
-            // comboBox2
+            // preferredEye
             // 
-            this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.Items.AddRange(new object[] {
+            this.preferredEye.FormattingEnabled = true;
+            this.preferredEye.Items.AddRange(new object[] {
             "Right",
             "Left",
             "Average"});
-            this.comboBox2.Location = new System.Drawing.Point(128, 66);
-            this.comboBox2.Margin = new System.Windows.Forms.Padding(4);
-            this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(375, 24);
-            this.comboBox2.TabIndex = 8;
-            this.comboBox2.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
+            this.preferredEye.Location = new System.Drawing.Point(128, 66);
+            this.preferredEye.Margin = new System.Windows.Forms.Padding(4);
+            this.preferredEye.Name = "preferredEye";
+            this.preferredEye.Size = new System.Drawing.Size(373, 24);
+            this.preferredEye.TabIndex = 8;
+            this.preferredEye.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
             // 
             // comboBox3
             // 
@@ -86,13 +86,13 @@
             this.comboBox3.Location = new System.Drawing.Point(128, 96);
             this.comboBox3.Margin = new System.Windows.Forms.Padding(4);
             this.comboBox3.Name = "comboBox3";
-            this.comboBox3.Size = new System.Drawing.Size(375, 24);
+            this.comboBox3.Size = new System.Drawing.Size(373, 24);
             this.comboBox3.TabIndex = 9;
             // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(511, 96);
+            this.checkBox1.Location = new System.Drawing.Point(509, 96);
             this.checkBox1.Margin = new System.Windows.Forms.Padding(4);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(60, 21);
@@ -186,7 +186,7 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.ComboBox comboBox2;
+        private System.Windows.Forms.ComboBox preferredEye;
         private System.Windows.Forms.ComboBox comboBox3;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Button button2;

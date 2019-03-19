@@ -41,6 +41,7 @@ namespace Ogama.Modules.ImportExport.UXI
         private const string SCSTATES_FILE = "SC_states";
         private const string ETDATA_FILE = "ET_data";
         private const string MEDATA_FILE = "ME_data";
+        private const string KBDATA_FILE = "KB_data";
         #endregion //CONSTANTS
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -143,6 +144,8 @@ namespace Ogama.Modules.ImportExport.UXI
         /// </summary>
         private long startTime;
 
+        private string preferredEye;
+
         #endregion //FIELDS
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -153,9 +156,10 @@ namespace Ogama.Modules.ImportExport.UXI
         /// <summary>
         /// Initializes a new instance of the ASCIISettings class.
         /// </summary>
-        public UXISettings()
+        public UXISettings(string preferredEye = "Average")
         {
             // Init OpenFileDialog
+            this.preferredEye = preferredEye;
             this.fileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fileDialog.DefaultExt = "txt";
             this.fileDialog.FileName = "*.txt;*.asc;*.csv";
@@ -578,6 +582,16 @@ namespace Ogama.Modules.ImportExport.UXI
         public string GetMEDataPath()
         {
             return folder + "\\" + MEDATA_FILE + ".json";
+        }
+
+        public string GetKBDataPath()
+        {
+            return folder + "\\" + KBDATA_FILE + ".json";
+        }
+
+        public string getPreferredEye()
+        {
+            return preferredEye;
         }
 
         #endregion //PUBLICMETHODS

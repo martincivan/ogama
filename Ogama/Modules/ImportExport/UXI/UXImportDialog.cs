@@ -21,6 +21,11 @@ namespace Ogama.Modules.ImportExport.UXI
             InitializeComponent();
         }
 
+        public void setPreferredEye(String value)
+        {
+            preferredEye.Text = value;
+        }
+
         public void setDirectories(List<String> list)
         {
             directoriesView.Rows.Clear();
@@ -54,9 +59,10 @@ namespace Ogama.Modules.ImportExport.UXI
             IProgress<int> k = new Progress<int>(v => form.Close());
             var tokenSource = new CancellationTokenSource();
             form.setTask(tokenSource);
+            string eye = preferredEye.Text;
             Task task = new Task(() =>
             {
-                UXImport.Run(valueList, p, tokenSource.Token);
+                UXImport.Run(valueList, p, tokenSource.Token, eye);
                 k.Report(1);
             });
             task.Start();
