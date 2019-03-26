@@ -42,6 +42,7 @@ namespace Ogama.Modules.ImportExport.UXI
         private const string ETDATA_FILE = "ET_data";
         private const string MEDATA_FILE = "ME_data";
         private const string KBDATA_FILE = "KB_data";
+        private const string SCDATA_FILE = "SC_data";
         #endregion //CONSTANTS
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -582,6 +583,11 @@ namespace Ogama.Modules.ImportExport.UXI
         public string GetMEDataPath()
         {
             return folder + "\\" + MEDATA_FILE + ".json";
+        }
+
+        public string GetScreenVideoPath()
+        {
+            return folder + "\\" + SCDATA_FILE + ".mp4";
         }
 
         public string GetKBDataPath()

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms.VisualStyles;
+using FFmpeg.NET;
 using Newtonsoft.Json;
 
 namespace Ogama.Modules.ImportExport.UXI
@@ -457,17 +458,28 @@ namespace Ogama.Modules.ImportExport.UXI
             return File.Exists(dir + "\\settings.json");
         }
 
+        public static void ImportVideo(string input, string output, CancellationToken token)
+        {
+            var inputFile = new MediaFile(input);
+            var outputFile = new MediaFile(output);
+            var e = new Engine("ffmpeg/ffmpeg.exe");
+            var task = e.ConvertAsync(inputFile, outputFile, token);
+            task.Wait();
+        }
+
         public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye)
         {
             int p = 0;
             foreach (String value in values)
             {
+               
                 Run(value, preferredEye);
                 progress.Report(++p);
+                ImportVideo(asciiSetting.GetScreenVideoPath(), Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath, detectionSetting.SubjectName + "-" + "0.avi") ,token);
                 if (token.IsCancellationRequested)
                 {
                     return;
-                }
+                }  
             }
             string message = "Import data successfully written to database." + Environment.NewLine
                                                                              + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
