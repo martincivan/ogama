@@ -60,17 +60,29 @@ namespace Ogama.Modules.ImportExport.UXI
             var tokenSource = new CancellationTokenSource();
             form.setTask(tokenSource);
             string eye = preferredEye.Text;
+            bool importVideo = checkBox1.Checked;
             Task task = new Task(() =>
             {
-                UXImport.Run(valueList, p, tokenSource.Token, eye);
+                UXImport.Run(valueList, p, tokenSource.Token, eye, importVideo);
                 k.Report(1);
             });
             task.Start();
         }
 
-        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
+            foreach (DataGridViewRow value in directoriesView.Rows)
+            {
+                value.Cells[0].Value = "True";
+            }
+        }
 
+        private void button3_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow value in directoriesView.Rows)
+            {
+                value.Cells[0].Value = "False";
+            }
         }
     }
 }

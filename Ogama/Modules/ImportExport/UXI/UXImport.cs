@@ -1,6 +1,7 @@
 ﻿
 using System.Data.Entity.Core.Common.EntitySql;
 using System.Linq;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms.VisualStyles;
@@ -467,19 +468,24 @@ namespace Ogama.Modules.ImportExport.UXI
             task.Wait();
         }
 
-        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye)
+        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye, bool importVideo)
         {
             int p = 0;
             foreach (String value in values)
             {
-               
                 Run(value, preferredEye);
-                progress.Report(++p);
-                ImportVideo(asciiSetting.GetScreenVideoPath(), Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath, detectionSetting.SubjectName + "-" + "0.avi") ,token);
+                if (importVideo)
+                {
+                    ImportVideo(asciiSetting.GetScreenVideoPath(),
+                        Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath,
+                            detectionSetting.SubjectName + "-" + "0.avi"), token);
+                }
+
                 if (token.IsCancellationRequested)
                 {
                     return;
-                }  
+                }
+                progress.Report(++p);
             }
             string message = "Import data successfully written to database." + Environment.NewLine
                                                                              + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
