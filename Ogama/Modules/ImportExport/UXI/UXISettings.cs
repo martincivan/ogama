@@ -407,6 +407,16 @@ namespace Ogama.Modules.ImportExport.UXI
             set { this.startTime = value; }
         }
 
+        public string PreferredEye
+        {
+            get { return preferredEye; }
+            set { preferredEye = value; }
+        }
+
+        public bool ImportMouseMovement { get; set; }
+        public bool ImportMouseEvents { get; set; }
+        public bool ImportKeyboardEvets { get; set; }
+
         #endregion //PROPERTIES
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -593,11 +603,6 @@ namespace Ogama.Modules.ImportExport.UXI
         public string GetKBDataPath()
         {
             return folder + "\\" + KBDATA_FILE + ".json";
-        }
-
-        public string getPreferredEye()
-        {
-            return preferredEye;
         }
 
         #endregion //PUBLICMETHODS

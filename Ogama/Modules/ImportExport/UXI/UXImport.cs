@@ -1,12 +1,9 @@
-﻿
-using System.Data.Entity.Core.Common.EntitySql;
-using System.Linq;
-using System.Security;
+﻿using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Windows.Forms.VisualStyles;
+using System.Threading.Tasks;
 using FFmpeg.NET;
-using Newtonsoft.Json;
+using Ogama.DataSet;
 
 namespace Ogama.Modules.ImportExport.UXI
 {
@@ -98,6 +95,8 @@ namespace Ogama.Modules.ImportExport.UXI
         protected static DetectionSettings detectionSetting;
 
         public static MainForm mainWindowCache;
+        private static TrialsData newTrialData;
+        private static SQLiteOgamaDataSet.RawdataDataTable subjectRawDataTable;
 
         #endregion
 
@@ -157,55 +156,6 @@ namespace Ogama.Modules.ImportExport.UXI
         #endregion
 
         #region Public Methods and Operators
-
-        /// <summary>
-        /// This method extracts a filename of a iViewX msg line
-        ///   with the given trigger string.
-        /// </summary>
-        /// <param name="line">
-        /// The line to search for.
-        /// </param>
-        /// <param name="triggerString">
-        /// The trigger string in the message after which the filename
-        ///   appears.
-        /// </param>
-        /// <param name="currentTrialID">
-        /// The ID of the current trial.
-        /// </param>
-        public static void ExtractImageNameFromiViewXmsg(string line, string triggerString, int currentTrialID)
-        {
-            if (line.Contains(triggerString))
-            {
-                string[] items = line.Trim().Split(asciiSetting.ColumnSeparatorCharacter);
-                foreach (string item in items)
-                {
-                    // Find item with trigger string
-                    if (item.Contains(triggerString))
-                    {
-                        // Remove "Scene Image" Prefix to get the filename
-                        string imagepath = item.Replace(triggerString, string.Empty);
-                        string stimulusFile = Path.GetFileName(imagepath).Trim();
-                        if (!detectionSetting.ImageDictionary.ContainsKey(currentTrialID))
-                        {
-                            detectionSetting.ImageDictionary.Add(currentTrialID, stimulusFile);
-                        }
-                        else
-                        {
-                            detectionSetting.ImageDictionary[currentTrialID] = stimulusFile;
-                        }
-
-                        detectionSetting.TrialSequenceToTrialIDAssignments[currentTrialID] = currentTrialID;
-
-                        if (!detectionSetting.TrialIDToImageAssignments.ContainsKey(currentTrialID))
-                        {
-                            detectionSetting.TrialIDToImageAssignments.Add(currentTrialID, stimulusFile);
-                        }
-
-                        break;
-                    }
-                }
-            }
-        }
 
         /// <summary>
         /// This static method creates a slide with a sized image
@@ -363,46 +313,6 @@ namespace Ogama.Modules.ImportExport.UXI
         }
 
         /// <summary>
-        /// This method splits the given trials data list into a
-        ///   dictionary of trial data lists separated by subjects.
-        /// </summary>
-        /// <param name="wholeTrialDataList">
-        /// A <see cref="List{TrialsData}"/>
-        ///   with all the imported samples.
-        /// </param>
-        /// <returns>
-        /// A Dictionary with the splitted input.
-        /// </returns>
-        public static Dictionary<string, List<TrialsData>> SplitTrialDataListBySubjects(List<TrialsData> wholeTrialDataList)
-        {
-            // Create the return dictionary
-            var trialDataBySubject = new Dictionary<string, List<TrialsData>>();
-
-            // Get First subject name
-            string lastSubjectName = string.Empty; // = wholeTrialDataList[0].SubjectName;
-
-            // Create list for current subject
-            var currentList = new List<TrialsData>();
-
-            // Iterate whole raw data list and add for each subject a 
-            // new entry in the rawDataBySubject list.
-            foreach (TrialsData data in wholeTrialDataList)
-            {
-                if (data.SubjectName != lastSubjectName)
-                {
-                    currentList = new List<TrialsData>();
-                    trialDataBySubject.Add(data.SubjectName, currentList);
-                    lastSubjectName = data.SubjectName;
-                }
-
-                currentList.Add(data);
-            }
-
-            // Return list.
-            return trialDataBySubject;
-        }
-
-        /// <summary>
         /// Starts a multiple dialog routine (raw data import assistant)
         ///   for reading raw data files into the programs database
         /// </summary>
@@ -459,31 +369,41 @@ namespace Ogama.Modules.ImportExport.UXI
             return File.Exists(dir + "\\settings.json");
         }
 
-        public static void ImportVideo(string input, string output, CancellationToken token)
+        public static Task ImportVideo(string input, string output, CancellationToken token)
         {
             var inputFile = new MediaFile(input);
             var outputFile = new MediaFile(output);
             var e = new Engine("ffmpeg/ffmpeg.exe");
-            var task = e.ConvertAsync(inputFile, outputFile, token);
-            task.Wait();
+            return e.ConvertAsync(inputFile, outputFile, token);
         }
 
-        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye, bool importVideo)
+        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye, bool importVideo, bool mouseMovement, bool mouseEvents, bool keyboardEvents)
         {
             int p = 0;
             foreach (String value in values)
             {
-                Run(value, preferredEye);
+                PrepareRun(value);
+                Task videoTask = null;
                 if (importVideo)
                 {
-                    ImportVideo(asciiSetting.GetScreenVideoPath(),
+                    videoTask = ImportVideo(asciiSetting.GetScreenVideoPath(),
                         Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath,
                             detectionSetting.SubjectName + "-" + "0.avi"), token);
                 }
 
+                asciiSetting.PreferredEye = preferredEye;
+                asciiSetting.ImportMouseMovement = mouseMovement;
+                asciiSetting.ImportMouseEvents = mouseEvents;
+                asciiSetting.ImportKeyboardEvets = keyboardEvents;
+                Run(value);
                 if (token.IsCancellationRequested)
                 {
                     return;
+                }
+
+                if (videoTask != null)
+                {
+                    videoTask.Wait();
                 }
                 progress.Report(++p);
             }
@@ -493,60 +413,59 @@ namespace Ogama.Modules.ImportExport.UXI
             ExceptionMethods.ProcessMessage("Success", message);
         }
 
-        public static void Run(Object dir, String pre)
+        public static void PrepareRun(Object dir)
+        {
+            Application.DoEvents();
+
+            asciiSetting = new UXISettings();
+            detectionSetting = new DetectionSettings();
+            asciiSetting.Folder = (string)dir;
+
+            RawDataList.Clear();
+            EventList.Clear();
+
+            string currentSubjectName = Path.GetFileName(asciiSetting.Folder);
+
+            if (!Char.IsLetter(currentSubjectName[0]))
+            {
+                currentSubjectName = "I" + currentSubjectName;
+            }
+
+            Regex rgx = new Regex("[^a-zA-Z0-9]");
+            currentSubjectName = rgx.Replace(currentSubjectName, "");
+
+            DateTime started = GetStartTime();
+            DateTimeOffset startedOffset = new DateTimeOffset(started.ToUniversalTime());
+            long startedmilis = startedOffset.ToUnixTimeMilliseconds();
+
+            detectionSetting.SubjectName = currentSubjectName;
+            detectionSetting.TimeFactor = 1;
+            detectionSetting.ImportType = ImportTypes.Rawdata;
+            asciiSetting.StartTime = startedmilis;
+            SubjectsData data = new SubjectsData();
+            data.SubjectName = currentSubjectName;
+            SubjectList.Add(data);
+            newTrialData = new TrialsData();
+            newTrialData.SubjectName = currentSubjectName;
+            newTrialData.TrialSequence = 0;
+            newTrialData.TrialID = 1;
+            newTrialData.TrialStartTime = 0;
+
+            subjectRawDataTable = new SQLiteOgamaDataSet.RawdataDataTable();
+
+            // Give it correct name
+            subjectRawDataTable.TableName = currentSubjectName + "Rawdata";
+        }
+
+        public static void Run(Object dir)
         {
             try
             {
-                //OpenFile:
-                //    detectionSetting.ImportType = ImportTypes.Rawdata;
-                //        var objfrmImportReadFile = new ImportParseFileDialog(ref asciiSetting);
-                //    ReadFile:
-                //        DialogResult resultRawData = objfrmImportReadFile.ShowDialog();
-                //        if (resultRawData == DialogResult.OK)
-                //        {
-                //            var objfrmImportRawDataAssignColumns = new ImportRawDataAssignColumnsDialog();
-
-                //        MakeAssignments:
-                //            DialogResult resultAssign = objfrmImportRawDataAssignColumns.ShowDialog();
-                //            if (resultAssign == DialogResult.OK)
-                //            {
-                //                var objfrmImportTrials = new ImportTrialsDialog(ref asciiSetting, ref detectionSetting);
-
-                //            CheckTrials:
-                //                DialogResult resultTrials = objfrmImportTrials.ShowDialog();
-                //                if (resultTrials == DialogResult.OK)
-                //                {
-                //                    var objfrmImportImages = new ImportImagesDialog(ref asciiSetting, ref detectionSetting);
-
-                //                    DialogResult resultImages = objfrmImportImages.ShowDialog();
-                //                    if (resultImages == DialogResult.OK)
-                //                    {
-                //                        if (MessageBox.Show(
-                //                          "Would you like to save the import settings ?",
-                //                          Application.ProductName,
-                //                          MessageBoxButtons.YesNo,
-                //                          MessageBoxIcon.Question) == DialogResult.Yes)
-                //                        {
-                //                          SaveImportSettings();
-                //                        }
-
-                // Show import splash window
-                //asciiSetting.WaitingSplash.RunWorkerAsync();
-
-                // Give some time to show the splash ...
-                Application.DoEvents();
-
-                asciiSetting = new UXISettings();
-                detectionSetting = new DetectionSettings();
-                asciiSetting.Folder = (string) dir;
-
-                // Read log file again, but complete
                 GenerateOgamaRawDataList(-1);
-
-                // Generate the trials
-                GenerateOgamaSubjectAndTrialList();
-
-                GenerateKeyboardEventList();
+                if (asciiSetting.ImportKeyboardEvets)
+                {
+                    GenerateKeyboardEventList();
+                }
 
                 // Save the import into ogamas database and the mdf file.
                 bool successful = SaveImportIntoTablesAndDB();
@@ -564,43 +483,6 @@ namespace Ogama.Modules.ImportExport.UXI
 
                 // Import has finished.
                 asciiSetting.WaitingSplash.CancelAsync();
-
-                // Inform user about success.
-//                if (successful)
-//                {
-//                    string message = "Import data successfully written to database." + Environment.NewLine
-//                                     + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
-//                                     + "of the experiment, otherwise no images will be shown.";
-//                    ExceptionMethods.ProcessMessage("Success", message);
-//                }
-//                else
-//                {
-//                    string message = "Import had errors. Some or all of the import data "
-//                                     + "could not be written the database.";
-//                    ExceptionMethods.ProcessErrorMessage(message);
-//                }
-                //}
-                //else if (resultImages == DialogResult.Cancel)
-                //{
-                //    goto CheckTrials;
-                //}
-                //}
-                //else if (resultTrials == DialogResult.Cancel)
-                //{
-                //    goto MakeAssignments;
-                //}
-                //}
-                //else if (resultAssign == DialogResult.Cancel)
-                //{
-                //    goto ReadFile;
-                //}
-                //}
-                //else if (resultRawData == DialogResult.Cancel)
-                //{
-                //    goto OpenFile;
-                //}
-                //    }
-                //}
             }
             catch (Exception ex)
             {
@@ -613,138 +495,6 @@ namespace Ogama.Modules.ImportExport.UXI
                     asciiSetting.WaitingSplash.CancelAsync();
                 }
             }
-
-            //try
-            //{
-            //    asciiSetting = new ASCIISettings();
-            //    detectionSetting = new DetectionSettings();
-
-            //    var objfrmImportAssistent = new ImportRawDataAssistentDialog();
-            //    if (objfrmImportAssistent.ShowDialog() == DialogResult.OK)
-            //    {
-            //    OpenFile:
-            //        if (asciiSetting.FileDialog.ShowDialog() == DialogResult.OK)
-            //        {
-            //            // Save filename
-            //            string filename = asciiSetting.FileDialog.FileName;
-
-            //            // Ask the user to use a settings file
-            //            // and loads it into the importsettings, if true.
-            //            AskforUsingSettingsFile();
-
-            //            // Save import file
-            //            asciiSetting.Filename = filename;
-
-            //            // Set import mode
-            //            detectionSetting.ImportType = ImportTypes.Rawdata;
-
-            //            var objfrmImportReadFile = new ImportParseFileDialog(ref asciiSetting);
-            //        ReadFile:
-            //            DialogResult resultRawData = objfrmImportReadFile.ShowDialog();
-            //            if (resultRawData == DialogResult.OK)
-            //            {
-            //                var objfrmImportRawDataAssignColumns = new ImportRawDataAssignColumnsDialog();
-
-            //            MakeAssignments:
-            //                DialogResult resultAssign = objfrmImportRawDataAssignColumns.ShowDialog();
-            //                if (resultAssign == DialogResult.OK)
-            //                {
-            //                    var objfrmImportTrials = new ImportTrialsDialog(ref asciiSetting, ref detectionSetting);
-
-            //                CheckTrials:
-            //                    DialogResult resultTrials = objfrmImportTrials.ShowDialog();
-            //                    if (resultTrials == DialogResult.OK)
-            //                    {
-            //                        var objfrmImportImages = new ImportImagesDialog(ref asciiSetting, ref detectionSetting);
-
-            //                        DialogResult resultImages = objfrmImportImages.ShowDialog();
-            //                        if (resultImages == DialogResult.OK)
-            //                        {
-            //                            if (MessageBox.Show(
-            //                              "Would you like to save the import settings ?",
-            //                              Application.ProductName,
-            //                              MessageBoxButtons.YesNo,
-            //                              MessageBoxIcon.Question) == DialogResult.Yes)
-            //                            {
-            //                                SaveImportSettings();
-            //                            }
-
-            //                            // Show import splash window
-            //                            asciiSetting.WaitingSplash.RunWorkerAsync();
-
-            //                            // Give some time to show the splash ...
-            //                            Application.DoEvents();
-
-            //                            // Read log file again, but complete
-            //                            GenerateOgamaRawDataList(-1);
-
-            //                            // Generate the trials
-            //                            GenerateOgamaSubjectAndTrialList();
-
-            //                            // Save the import into ogamas database and the mdf file.
-            //                            bool successful = SaveImportIntoTablesAndDB();
-
-            //                            // Create slideshow trials
-            //                            GenerateOgamaSlideshowTrials(detectionSetting, mainWindow);
-
-            //                            // Calculate Fixations
-            //                            CalculateFixations(mainWindow);
-
-            //                            // Clear lists
-            //                            SubjectList.Clear();
-            //                            TrialList.Clear();
-            //                            RawDataList.Clear();
-
-            //                            // Import has finished.
-            //                            asciiSetting.WaitingSplash.CancelAsync();
-
-            //                            // Inform user about success.
-            //                            if (successful)
-            //                            {
-            //                                string message = "Import data successfully written to database." + Environment.NewLine
-            //                                                 + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
-            //                                                 + "of the experiment, otherwise no images will be shown.";
-            //                                ExceptionMethods.ProcessMessage("Success", message);
-            //                            }
-            //                            else
-            //                            {
-            //                                string message = "Import had errors. Some or all of the import data "
-            //                                                 + "could not be written the database.";
-            //                                ExceptionMethods.ProcessErrorMessage(message);
-            //                            }
-            //                        }
-            //                        else if (resultImages == DialogResult.Cancel)
-            //                        {
-            //                            goto CheckTrials;
-            //                        }
-            //                    }
-            //                    else if (resultTrials == DialogResult.Cancel)
-            //                    {
-            //                        goto MakeAssignments;
-            //                    }
-            //                }
-            //                else if (resultAssign == DialogResult.Cancel)
-            //                {
-            //                    goto ReadFile;
-            //                }
-            //            }
-            //            else if (resultRawData == DialogResult.Cancel)
-            //            {
-            //                goto OpenFile;
-            //            }
-            //        }
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    string message = "Something failed during import." + Environment.NewLine
-            //                     + "Please try again with other settings. " + Environment.NewLine + "Error: " + ex.Message;
-            //    ExceptionMethods.ProcessErrorMessage(message);
-            //    if (asciiSetting.WaitingSplash.IsBusy)
-            //    {
-            //        asciiSetting.WaitingSplash.CancelAsync();
-            //    }
-            //}
         }
 
         private static void GenerateKeyboardEventList()
@@ -782,6 +532,7 @@ namespace Ogama.Modules.ImportExport.UXI
                     newEventData.EventTask = "Down";
                 }
                 newEventData.EventParam = "Key: " + record["KeyCode"];
+                newEventData.EventID = EventList.Count + 1;
                 EventList.Add(newEventData);
             }
         }
@@ -813,45 +564,6 @@ namespace Ogama.Modules.ImportExport.UXI
             }
 
             mainWindow.StatusLabel.Text = "Fixation calculation done ...";
-        }
-
-        /// <summary>
-        /// Reads an OGAMA import settings file.
-        /// </summary>
-        /// <param name="filePath">
-        /// A <see cref="string"/> with the path to the
-        ///   OGAMA import settings xml file.
-        /// </param>
-        /// <returns>
-        /// <strong>True</strong> if successful,
-        ///   otherwise <strong>null</strong>.
-        /// </returns>
-        private static bool DeserializeSettings(string filePath)
-        {
-            try
-            {
-                using (var fs = new FileStream(filePath, FileMode.Open))
-                {
-                    // Create an instance of the XmlSerializer class;
-                    // specify the type of object to be deserialized 
-                    var serializer = new XmlSerializer(typeof(MergedSettings));
-
-                    /* Use the Deserialize method to restore the object's state with
-                    data from the XML document. */
-                    var settings = (MergedSettings)serializer.Deserialize(fs);
-
-                    //asciiSetting = settings.AsciiSetting;
-                    detectionSetting = settings.DetectionSetting;
-                }
-            }
-            catch (Exception ex)
-            {
-                ExceptionMethods.HandleException(ex);
-
-                return false;
-            }
-
-            return true;
         }
 
         private static DateTime GetStartTime()
@@ -893,8 +605,7 @@ namespace Ogama.Modules.ImportExport.UXI
         private static void GenerateOgamaRawDataList(int numberOfImportLines)
         {
             // Clear existing values
-            RawDataList.Clear();
-            EventList.Clear();
+           
 
             double lastTimeInFileTime = -1;
 
@@ -903,50 +614,19 @@ namespace Ogama.Modules.ImportExport.UXI
             List<Trial> trials = Document.ActiveDocument.ExperimentSettings.SlideShow.Trials;
             List<string> trialNames = Document.ActiveDocument.ExperimentSettings.SlideShow.GetTrialNames();
 
-            // Enumerate the columns in the import file and assign their title.
-            //var columnsImportNum = new Dictionary<string, int>();
-
-            // Get the assigned titles of the import columns for Ogamas columns
-            //string strSubjectNameImportColumn = asciiSetting.ColumnAssignments["SubjectName"];
-            //string strTrialSequenceImportColumn = asciiSetting.ColumnAssignments["TrialSequence"];
-            //string strTrialIDImportColumn = asciiSetting.ColumnAssignments["TrialID"];
-            //string strTrialImageImportColumn = asciiSetting.ColumnAssignments["TrialImage"];
-            //string strCategoryImportColumn = asciiSetting.ColumnAssignments["TrialCategory"];
-            //string strTimeImportColumn = asciiSetting.ColumnAssignments["Time"];
-            //string strPupilDiaXImportColumn = asciiSetting.ColumnAssignments["PupilDiaX"];
-            //string strPupilDiaYImportColumn = asciiSetting.ColumnAssignments["PupilDiaY"];
-            //string strGazePosXImportColumn = asciiSetting.ColumnAssignments["GazePosX"];
-            //string strGazePosYImportColumn = asciiSetting.ColumnAssignments["GazePosY"];
-            //string strMousePosXImportColumn = asciiSetting.ColumnAssignments["MousePosX"];
-            //string strMousePosYImportColumn = asciiSetting.ColumnAssignments["MousePosY"];
             int counter = 0;
             int trialCounter = 0;
-            int currentTrialSequence = 0;
             bool isLastTrial = false;
             string lastSubjectName = "#";
-            string currentSubjectName = Path.GetFileName(asciiSetting.Folder);
-
-            if (!Char.IsLetter(currentSubjectName[0]))
-            {
-                currentSubjectName = "I" + currentSubjectName;
-            }
-
-            Regex rgx = new Regex("[^a-zA-Z0-9]");
-            currentSubjectName = rgx.Replace(currentSubjectName, "");
-
             SortedList<int, long> trial2Time = detectionSetting.TrialSequenceToStarttimeAssignments;
+            int currentTrialSequence = 0;
             if (trial2Time.Count > 0)
             {
                 currentTrialSequence = trial2Time.Keys[0];
             }
-            DateTime started = GetStartTime();
-            DateTimeOffset startedOffset = new DateTimeOffset(started.ToUniversalTime());
-            long startedmilis = startedOffset.ToUnixTimeMilliseconds();
 
-            detectionSetting.SubjectName = currentSubjectName;
-            detectionSetting.TimeFactor = 1;
-            detectionSetting.ImportType = ImportTypes.Rawdata;
-            asciiSetting.StartTime = startedmilis;
+            string currentSubjectName = detectionSetting.SubjectName;
+            var startedmilis = asciiSetting.StartTime;
 
             StreamReader ETDataFile = new StreamReader(asciiSetting.GetETDataPath());
             JavaScriptSerializer deserializer = new JavaScriptSerializer();
@@ -964,14 +644,14 @@ namespace Ogama.Modules.ImportExport.UXI
                 dynamic gazeData = record["RightEye"];
                 if (record["Validity"] == BOTH)
                 {
-                    if (asciiSetting.getPreferredEye() == "Average")
+                    if (asciiSetting.PreferredEye == "Average")
                     {
                         gazeData["GazePoint2D"]["X"] = ((double) record["RightEye"]["GazePoint2D"]["X"] + (double) record["LeftEye"]["GazePoint2D"]["X"]) / 2;
                         gazeData["GazePoint2D"]["Y"] = ((double) record["RightEye"]["GazePoint2D"]["Y"] + (double) record["LeftEye"]["GazePoint2D"]["Y"]) / 2;
                     }
                     else
                     {
-                        gazeData = record[asciiSetting.getPreferredEye() + "Eye"];
+                        gazeData = record[asciiSetting.PreferredEye + "Eye"];
                     }
                 }
                 else
@@ -979,22 +659,28 @@ namespace Ogama.Modules.ImportExport.UXI
                     gazeData = record[record["Validity"] + "Eye"];
                 }
                 
-                //                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * 1920;
                 newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
-                //newRawData.GazePosX *= 1920;
-//                newRawData.GazePosY = (float) gazeData["GazePoint2D"]["Y"] * 1080;
                 newRawData.GazePosY = (float ) gazeData["GazePoint2D"]["Y"] * Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
-                //newRawData.GazePosY *= 1080; 
                 newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
-                newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
+                newRawData.PupilDiaY = (float) gazeData["PupilDiameter"];
                 DateTime time = DateTime.Parse(record["Timestamp"]);
-                //time.Subtract(started);
                 DateTimeOffset timeOffset = new DateTimeOffset(time);
                 newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
-                RawDataList.Add(newRawData);
                 counter++;
+                if (RawDataList.Count > 10000)
+                {
+                    Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
+                    RawDataList.Clear();
+                }
+                RawDataList.Add(newRawData);
             }
+            newTrialData.Duration = (int)RawDataList[RawDataList.Count - 1].Time;
+            TrialList.Add(newTrialData);
             ETDataFile.Close();
+            Document.ActiveDocument.DocDataSet.Tables.Add(subjectRawDataTable);
+            Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
+            RawDataList.Clear();
+
             StreamReader MEDataFile = new StreamReader(asciiSetting.GetMEDataPath());
             json = deserializer.Deserialize<dynamic>(MEDataFile.ReadToEnd());
             foreach (dynamic record in json)
@@ -1005,6 +691,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 }
                 if (record["EventType"] == MOVE)
                 {
+                    if (!asciiSetting.ImportMouseMovement)
+                    {
+                        continue;
+                    }
                     var newRawData = new RawData();
                     newRawData.SubjectName = currentSubjectName;
                     DateTime time = DateTime.Parse(record["Timestamp"]);
@@ -1017,6 +707,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 }
                 else
                 {
+                    if (!asciiSetting.ImportMouseEvents)
+                    {
+                        continue;
+                    }
                     var newEventData = new TrialEventsData();
                     newEventData.SubjectName = currentSubjectName;
                     newEventData.TrialSequence = currentTrialSequence;
@@ -1033,9 +727,12 @@ namespace Ogama.Modules.ImportExport.UXI
                         newEventData.EventTask = "Down";
                     }
                     newEventData.EventParam = String.Format("Mouse: {0} ({1},{2})", record["Button"], record["X"], record["Y"]);
-                    EventList.Add(newEventData);
+                    newEventData.EventID = EventList.Count;
+                    //EventList.Add(newEventData);
                 }
             }
+            Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
+            RawDataList.Clear();
             MEDataFile.Close();
         }
 
@@ -1104,11 +801,7 @@ namespace Ogama.Modules.ImportExport.UXI
         {
             string subject = importRow.SubjectName != null ? importRow.SubjectName : "Subject1";
             string categorie = importRow.Category != null ? importRow.Category : string.Empty;
-            int trialID = currentSequence;
-            if (detectionSetting.TrialSequenceToTrialIDAssignments.ContainsKey(currentSequence))
-            {
-                trialID = detectionSetting.TrialSequenceToTrialIDAssignments[currentSequence];
-            }
+            int trialID = 1;
 
             string image = "No image file specified";
 
@@ -1238,13 +931,9 @@ namespace Ogama.Modules.ImportExport.UXI
 /// </returns>
 private static bool SaveImportIntoTablesAndDB()
 {
-    //Dictionary<string, List<RawData>> rawDataBySubject = SplitRawDataListBySubjects(RawDataList);
-    //Dictionary<string, List<TrialsData>> trialDataBySubject = SplitTrialDataListBySubjects(TrialList);
     int subjectErrorCounter = 0;
     try
     {
-    //    foreach (SubjectsData subject in SubjectList)
-      //  {
             SubjectsData subject = SubjectList[0];
             string testSub = subject.SubjectName;
             if (!Queries.ValidateSubjectName(ref testSub, false))
@@ -1255,13 +944,6 @@ private static bool SaveImportIntoTablesAndDB()
                                                      + "the existing database entry.";
                 ExceptionMethods.ProcessMessage("Unallowed subject names", message);
                 }
-
-            //List<RawData> subjectRawData = rawDataBySubject[subject.SubjectName];
-            //List<TrialsData> subjectTrialsData = trialDataBySubject[subject.SubjectName];
-            if (!Queries.WriteRawDataListToDataSet(subject.SubjectName, RawDataList))
-            {
-                throw new DataException("The new raw data table could not be written into the dataset.");
-            }
 
             // Creates an empty raw data table in the mdf database
             Queries.CreateRawDataTableInDB(subject.SubjectName);
@@ -1288,9 +970,10 @@ private static bool SaveImportIntoTablesAndDB()
             {
                 throw new DataException("The new trial events could not be written into the dataset.");
             }
-        //}
 
         Document.ActiveDocument.DocDataSet.EnforceConstraints = false;
+
+        Document.ActiveDocument.DocDataSet.TrialEventsAdapter.Update(Document.ActiveDocument.DocDataSet.TrialEvents);
 
         // Update subjects and trials table in the mdf database
         int affectedRows = Document.ActiveDocument.DocDataSet.TrialsAdapter.Update(Document.ActiveDocument.DocDataSet.Trials);
@@ -1331,29 +1014,6 @@ private static bool SaveImportIntoTablesAndDB()
     return true;
 }
 
-/// <summary>
-/// This method shows a dialog asking for saving the current
-///   import settings to hard disk.
-///   They are persited in xml format.
-/// </summary>
-private static void SaveImportSettings()
-{
-    var ofdSaveSettings = new SaveFileDialog
-    {
-        DefaultExt = "ois",
-        FileName = "*.ois",
-        FilterIndex = 1,
-        Filter = "Ogama import settings files|*.ois",
-        Title = "Please specify settings filename",
-        InitialDirectory = Properties.Settings.Default.ImportSettingsPath
-    };
-
-    if (ofdSaveSettings.ShowDialog() == DialogResult.OK)
-    {
-        SerializeSettings(ofdSaveSettings.FileName);
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Small helping Methods                                                     //
 ///////////////////////////////////////////////////////////////////////////////
@@ -1382,52 +1042,6 @@ private static void SerializeSettings(string filePath)
     {
         ExceptionMethods.HandleException(ex);
     }
-}
-
-/// <summary>
-/// This method splits the given raw data list into a
-///   dictionary of raw data lists separated by subjects.
-/// </summary>
-/// <remarks>
-/// This is done to enable writing a raw data table for each subject.
-/// </remarks>
-/// <param name="wholeRawDataList">
-/// A <see cref="List{RawData}"/>
-///   with all the imported samples.
-/// </param>
-/// <returns>
-/// A Dictionary with the splitted input.
-/// </returns>
-private static Dictionary<string, List<RawData>> SplitRawDataListBySubjects(List<RawData> wholeRawDataList)
-{
-    // Create the return dictionary
-    var rawDataBySubject = new Dictionary<string, List<RawData>>();
-
-    // Get First subject name
-    string lastSubjectName = wholeRawDataList[0].SubjectName;
-
-    // Create list for current subject
-    var currentList = new List<RawData>();
-
-    // Iterate whole raw data list and add for each subject a 
-    // new entry in the rawDataBySubject list.
-    foreach (RawData data in wholeRawDataList)
-    {
-        if (data.SubjectName != lastSubjectName)
-        {
-            rawDataBySubject.Add(lastSubjectName, currentList);
-            currentList = new List<RawData>();
-            lastSubjectName = data.SubjectName;
-        }
-
-        currentList.Add(data);
-    }
-
-    // Add last subject
-    rawDataBySubject.Add(lastSubjectName, currentList);
-
-    // Return list.
-    return rawDataBySubject;
 }
 
         #endregion

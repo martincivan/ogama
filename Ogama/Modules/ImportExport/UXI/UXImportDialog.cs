@@ -61,9 +61,12 @@ namespace Ogama.Modules.ImportExport.UXI
             form.setTask(tokenSource);
             string eye = preferredEye.Text;
             bool importVideo = checkBox1.Checked;
+            bool importMouseMovement = checkBox2.Checked;
+            bool importMouseEvents = checkBox3.Checked;
+            bool importKeyboardEvents = checkBox3.Checked;
             Task task = new Task(() =>
             {
-                UXImport.Run(valueList, p, tokenSource.Token, eye, importVideo);
+                UXImport.Run(valueList, p, tokenSource.Token, eye, importVideo, importMouseMovement, importMouseEvents, importKeyboardEvents);
                 k.Report(1);
             });
             task.Start();
