@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FFmpeg.NET;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Ogama.DataSet;
 
 namespace Ogama.Modules.ImportExport.UXI
@@ -44,7 +46,7 @@ namespace Ogama.Modules.ImportExport.UXI
         ///////////////////////////////////////////////////////////////////////////////
         // Defining Constants                                                        //
         ///////////////////////////////////////////////////////////////////////////////
-        
+
 
         private const string BOTH = "Both";
         private const string RIGHT = "Right";
@@ -55,12 +57,13 @@ namespace Ogama.Modules.ImportExport.UXI
         private const string KEY_DOWN = "KeyDown";
         private const string KEY_PRESS = "KeyPress";
         private const string MOVE = "Move";
-        private static readonly String[] VALIDITY_WHITELIST = { BOTH, LEFT, RIGHT};
-        private static readonly String[] EVENTTYPES_WHITELIST = { BUTTON_DOWN, BUTTON_UP, MOVE };
+        private static readonly String[] VALIDITY_WHITELIST = {BOTH, LEFT, RIGHT};
+        private static readonly String[] EVENTTYPES_WHITELIST = {BUTTON_DOWN, BUTTON_UP, MOVE};
 
         ///////////////////////////////////////////////////////////////////////////////
         // Defining Variables, Enumerations, Events                                  //
         ///////////////////////////////////////////////////////////////////////////////
+
         #region Static Fields
 
         /// <summary>
@@ -103,6 +106,7 @@ namespace Ogama.Modules.ImportExport.UXI
         ///////////////////////////////////////////////////////////////////////////////
         // Construction and Initializing methods                                     //
         ///////////////////////////////////////////////////////////////////////////////
+
         #region Constructors and Destructors
 
         /// <summary>
@@ -124,6 +128,7 @@ namespace Ogama.Modules.ImportExport.UXI
         ///////////////////////////////////////////////////////////////////////////////
         // Defining Properties                                                       //
         ///////////////////////////////////////////////////////////////////////////////
+
         #region Public Properties
 
         /// <summary>
@@ -134,10 +139,7 @@ namespace Ogama.Modules.ImportExport.UXI
         /// <seealso cref="ASCIISettings" />
         public static UXISettings ASCIISettings
         {
-            get
-            {
-                return asciiSetting;
-            }
+            get { return asciiSetting; }
         }
 
         /// <summary>
@@ -147,10 +149,7 @@ namespace Ogama.Modules.ImportExport.UXI
         /// <seealso cref="DetectionSettings" />
         public static DetectionSettings DetectionSetting
         {
-            get
-            {
-                return detectionSetting;
-            }
+            get { return detectionSetting; }
         }
 
         #endregion
@@ -186,48 +185,48 @@ namespace Ogama.Modules.ImportExport.UXI
 
                 // Create slide
                 var stopConditions = new StopConditionCollection
-                               {
-                                 new MouseStopCondition(
-                                   MouseButtons.Left,
-                                   true,
-                                   string.Empty,
-                                   null,
-                                   Point.Empty)
-                               };
+                {
+                    new MouseStopCondition(
+                        MouseButtons.Left,
+                        true,
+                        string.Empty,
+                        null,
+                        Point.Empty)
+                };
 
                 VGImage stimulusImage = null;
 
                 if (file != string.Empty)
                 {
                     stimulusImage = new VGImage(
-                      ShapeDrawAction.None,
-                      Pens.Black,
-                      Brushes.Black,
-                      SystemFonts.MenuFont,
-                      Color.White,
-                      Path.GetFileName(file),
-                      Document.ActiveDocument.ExperimentSettings.SlideResourcesPath,
-                      ImageLayout.Zoom,
-                      1f,
-                      Document.ActiveDocument.PresentationSize,
-                      VGStyleGroup.None,
-                      filename,
-                      string.Empty,
-                      true)
+                        ShapeDrawAction.None,
+                        Pens.Black,
+                        Brushes.Black,
+                        SystemFonts.MenuFont,
+                        Color.White,
+                        Path.GetFileName(file),
+                        Document.ActiveDocument.ExperimentSettings.SlideResourcesPath,
+                        ImageLayout.Zoom,
+                        1f,
+                        Document.ActiveDocument.PresentationSize,
+                        VGStyleGroup.None,
+                        filename,
+                        string.Empty,
+                        true)
                     {
                         Size = Document.ActiveDocument.PresentationSize
                     };
                 }
 
                 var newSlide = new Slide(
-                  filename,
-                  Color.White,
-                  null,
-                  stopConditions,
-                  null,
-                  string.Empty,
-                  Document.ActiveDocument.PresentationSize)
-                { Modified = true, MouseCursorVisible = true };
+                        filename,
+                        Color.White,
+                        null,
+                        stopConditions,
+                        null,
+                        string.Empty,
+                        Document.ActiveDocument.PresentationSize)
+                    {Modified = true, MouseCursorVisible = true};
 
                 // Only add stimulus if an image exists
                 if (file != string.Empty)
@@ -249,11 +248,12 @@ namespace Ogama.Modules.ImportExport.UXI
                     continue;
                 }
 
-                var newTrial = new Trial(filename, trialID) { Name = filename };
+                var newTrial = new Trial(filename, trialID) {Name = filename};
 
                 newTrial.Add(newSlide);
 
-                if (trialNames.Contains(filename) || (filename == string.Empty && trialNames.Contains("No stimulus detected")))
+                if (trialNames.Contains(filename) ||
+                    (filename == string.Empty && trialNames.Contains("No stimulus detected")))
                 {
                     // Trial already exists
                     continue;
@@ -274,7 +274,8 @@ namespace Ogama.Modules.ImportExport.UXI
             }
 
             mainWindow.StatusLabel.Text = "Saving slideshow to file ...";
-            if (!Document.ActiveDocument.SaveSettingsToFile(Document.ActiveDocument.ExperimentSettings.DocumentFilename))
+            if (!Document.ActiveDocument.SaveSettingsToFile(Document.ActiveDocument.ExperimentSettings.DocumentFilename)
+            )
             {
                 ExceptionMethods.ProcessErrorMessage("Couldn't save slideshow to experiment settings.");
             }
@@ -305,7 +306,6 @@ namespace Ogama.Modules.ImportExport.UXI
         {
             // Convert the import file into ogama column format
             GenerateOgamaRawDataList(numberOfImportLines);
-
             // Generate the trial list from the raw data with the current settings.
             GenerateOgamaSubjectAndTrialList();
 
@@ -328,11 +328,13 @@ namespace Ogama.Modules.ImportExport.UXI
             {
                 return;
             }
+
             asciiSetting.Folder = folderBrowser.SelectedPath;
             var folders = CreateFolderList(asciiSetting.Folder);
             if (folders.Count == 0)
             {
-                MessageBox.Show("No projects have been found in selected folder and folders inside it.", "Project not found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No projects have been found in selected folder and folders inside it.",
+                    "Project not found", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -350,6 +352,7 @@ namespace Ogama.Modules.ImportExport.UXI
             {
                 result.Add((String) d);
             }
+
             foreach (String dir in Directory.EnumerateDirectories((String) d))
             {
                 if (UXImport.CheckDirectory(dir))
@@ -361,6 +364,7 @@ namespace Ogama.Modules.ImportExport.UXI
                     result = result.Concat(CreateFolderList(dir)).ToList();
                 }
             }
+
             return result;
         }
 
@@ -377,7 +381,8 @@ namespace Ogama.Modules.ImportExport.UXI
             return e.ConvertAsync(inputFile, outputFile, token);
         }
 
-        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token, String preferredEye, bool importVideo, bool mouseMovement, bool mouseEvents, bool keyboardEvents)
+        public static void Run(List<String> values, IProgress<int> progress, CancellationToken token,
+            String preferredEye, bool importVideo, bool mouseMovement, bool mouseEvents, bool keyboardEvents)
         {
             int p = 0;
             foreach (String value in values)
@@ -405,8 +410,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 {
                     videoTask.Wait();
                 }
+
                 progress.Report(++p);
             }
+
             string message = "Import data successfully written to database." + Environment.NewLine
                                                                              + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
                                                                              + "of the experiment, otherwise no images will be shown.";
@@ -419,7 +426,7 @@ namespace Ogama.Modules.ImportExport.UXI
 
             asciiSetting = new UXISettings();
             detectionSetting = new DetectionSettings();
-            asciiSetting.Folder = (string)dir;
+            asciiSetting.Folder = (string) dir;
 
             RawDataList.Clear();
             EventList.Clear();
@@ -462,6 +469,7 @@ namespace Ogama.Modules.ImportExport.UXI
             try
             {
                 GenerateOgamaRawDataList(-1);
+                GenerateMouseDataList();
                 if (asciiSetting.ImportKeyboardEvets)
                 {
                     GenerateKeyboardEventList();
@@ -487,8 +495,9 @@ namespace Ogama.Modules.ImportExport.UXI
             catch (Exception ex)
             {
                 string message = "Something failed during import." + Environment.NewLine
-                                 + "Please try again with other settings. " + Environment.NewLine + "Error: " + ex.Message
-                                 + Environment.NewLine + ex.StackTrace ;
+                                                                   + "Please try again with other settings. " +
+                                                                   Environment.NewLine + "Error: " + ex.Message
+                                                                   + Environment.NewLine + ex.StackTrace;
                 ExceptionMethods.ProcessErrorMessage(message);
                 if (asciiSetting.WaitingSplash.IsBusy)
                 {
@@ -510,12 +519,14 @@ namespace Ogama.Modules.ImportExport.UXI
             {
                 currentTrialSequence = trial2Time.Keys[0];
             }
+
             foreach (dynamic record in json)
             {
                 if (record["EventType"] == KEY_PRESS)
                 {
                     continue;
                 }
+
                 var newEventData = new TrialEventsData();
                 newEventData.SubjectName = currentSubjectName;
                 newEventData.TrialSequence = currentTrialSequence;
@@ -527,10 +538,12 @@ namespace Ogama.Modules.ImportExport.UXI
                 {
                     newEventData.EventTask = "Up";
                 }
+
                 if (record["EventType"] == KEY_DOWN)
                 {
                     newEventData.EventTask = "Down";
                 }
+
                 newEventData.EventParam = "Key: " + record["KeyCode"];
                 newEventData.EventID = EventList.Count + 1;
                 EventList.Add(newEventData);
@@ -555,7 +568,8 @@ namespace Ogama.Modules.ImportExport.UXI
             foreach (SubjectsData subject in SubjectList)
             {
                 // Get trial data of current subject
-                DataTable trialsTable = Document.ActiveDocument.DocDataSet.TrialsAdapter.GetDataBySubject(subject.SubjectName);
+                DataTable trialsTable =
+                    Document.ActiveDocument.DocDataSet.TrialsAdapter.GetDataBySubject(subject.SubjectName);
 
                 // Calculate fixations
                 var calculationObject = new FixationCalculation();
@@ -605,7 +619,7 @@ namespace Ogama.Modules.ImportExport.UXI
         private static void GenerateOgamaRawDataList(int numberOfImportLines)
         {
             // Clear existing values
-           
+
 
             double lastTimeInFileTime = -1;
 
@@ -628,112 +642,146 @@ namespace Ogama.Modules.ImportExport.UXI
             string currentSubjectName = detectionSetting.SubjectName;
             var startedmilis = asciiSetting.StartTime;
 
-            StreamReader ETDataFile = new StreamReader(asciiSetting.GetETDataPath());
-            JavaScriptSerializer deserializer = new JavaScriptSerializer();
-            deserializer.MaxJsonLength = 99999999;
-            var json = deserializer.Deserialize<dynamic>(ETDataFile.ReadToEnd());
-
-            foreach(dynamic record in json)
+            using (FileStream fs = new FileStream(asciiSetting.GetETDataPath(), FileMode.Open, FileAccess.Read))
+            using (StreamReader sr = new StreamReader(fs))
+            using (var jsonTextReader = new JsonTextReader(sr))
             {
-                if (Array.IndexOf(VALIDITY_WHITELIST,  record["Validity"]) == -1)
+                while (jsonTextReader.Read())
                 {
-                    continue;
-                }
-                var newRawData = new RawData();
-                newRawData.SubjectName = currentSubjectName;
-                dynamic gazeData = record["RightEye"];
-                if (record["Validity"] == BOTH)
-                {
-                    if (asciiSetting.PreferredEye == "Average")
+                    if (jsonTextReader.TokenType == JsonToken.StartObject)
                     {
-                        gazeData["GazePoint2D"]["X"] = ((double) record["RightEye"]["GazePoint2D"]["X"] + (double) record["LeftEye"]["GazePoint2D"]["X"]) / 2;
-                        gazeData["GazePoint2D"]["Y"] = ((double) record["RightEye"]["GazePoint2D"]["Y"] + (double) record["LeftEye"]["GazePoint2D"]["Y"]) / 2;
+                        JObject record = JObject.Load(jsonTextReader);
+                        if (Array.IndexOf(VALIDITY_WHITELIST, record["Validity"].ToString()) == -1)
+                        {
+                            continue;
+                        }
+
+                        var newRawData = new RawData();
+                        newRawData.SubjectName = currentSubjectName;
+                        dynamic gazeData = record["RightEye"];
+                        if (record["Validity"].ToString() == BOTH)
+                        {
+                            if (asciiSetting.PreferredEye == "Average")
+                            {
+                                gazeData["GazePoint2D"]["X"] =
+                                    ((double) record["RightEye"]["GazePoint2D"]["X"] +
+                                     (double) record["LeftEye"]["GazePoint2D"]["X"]) / 2;
+                                gazeData["GazePoint2D"]["Y"] =
+                                    ((double) record["RightEye"]["GazePoint2D"]["Y"] +
+                                     (double) record["LeftEye"]["GazePoint2D"]["Y"]) / 2;
+                            }
+                            else
+                            {
+                                gazeData = record[asciiSetting.PreferredEye + "Eye"];
+                            }
+                        }
+                        else
+                        {
+                            gazeData = record[record["Validity"] + "Eye"];
+                        }
+
+                        newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] *
+                                              Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
+                        newRawData.GazePosY = (float) gazeData["GazePoint2D"]["Y"] *
+                                              Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
+                        newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
+                        newRawData.PupilDiaY = (float) gazeData["PupilDiameter"];
+                        DateTime time = DateTime.Parse(record["Timestamp"].ToString());
+                        DateTimeOffset timeOffset = new DateTimeOffset(time);
+                        newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                        counter++;
+                        if (RawDataList.Count > 10000)
+                        {
+                            Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
+                            RawDataList.Clear();
+                        }
+
+                        RawDataList.Add(newRawData);
                     }
-                    else
-                    {
-                        gazeData = record[asciiSetting.PreferredEye + "Eye"];
-                    }
                 }
-                else
-                {
-                    gazeData = record[record["Validity"] + "Eye"];
-                }
-                
-                newRawData.GazePosX = (float) gazeData["GazePoint2D"]["X"] * Document.ActiveDocument.ExperimentSettings.WidthStimulusScreen;
-                newRawData.GazePosY = (float ) gazeData["GazePoint2D"]["Y"] * Document.ActiveDocument.ExperimentSettings.HeightStimulusScreen;
-                newRawData.PupilDiaX = (float) gazeData["PupilDiameter"];
-                newRawData.PupilDiaY = (float) gazeData["PupilDiameter"];
-                DateTime time = DateTime.Parse(record["Timestamp"]);
-                DateTimeOffset timeOffset = new DateTimeOffset(time);
-                newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
-                counter++;
-                if (RawDataList.Count > 10000)
-                {
-                    Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
-                    RawDataList.Clear();
-                }
-                RawDataList.Add(newRawData);
             }
-            newTrialData.Duration = (int)RawDataList[RawDataList.Count - 1].Time;
+
+
+            newTrialData.Duration = (int) RawDataList[RawDataList.Count - 1].Time;
             TrialList.Add(newTrialData);
-            ETDataFile.Close();
+            //ETDataFile.Close();
             Document.ActiveDocument.DocDataSet.Tables.Add(subjectRawDataTable);
             Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
             RawDataList.Clear();
 
-            StreamReader MEDataFile = new StreamReader(asciiSetting.GetMEDataPath());
-            json = deserializer.Deserialize<dynamic>(MEDataFile.ReadToEnd());
-            foreach (dynamic record in json)
+        }
+
+        private static void GenerateMouseDataList()
+        {
+            var currentTrialSequence = 0;
+            string currentSubjectName = detectionSetting.SubjectName;
+            var startedmilis = asciiSetting.StartTime;
+
+            using (FileStream fs = new FileStream(asciiSetting.GetMEDataPath(), FileMode.Open, FileAccess.Read))
+            using (StreamReader sr = new StreamReader(fs))
+            using (var jsonTextReader = new JsonTextReader(sr))
             {
-                if (Array.IndexOf(EVENTTYPES_WHITELIST, record["EventType"]) == -1)
+                while (jsonTextReader.Read())
                 {
-                    continue;
-                }
-                if (record["EventType"] == MOVE)
-                {
-                    if (!asciiSetting.ImportMouseMovement)
+                    if (jsonTextReader.TokenType == JsonToken.StartObject)
                     {
-                        continue;
+                        JObject record = JObject.Load(jsonTextReader);
+                        if (Array.IndexOf(EVENTTYPES_WHITELIST, record["EventType"].ToString()) == -1)
+                        {
+                            continue;
+                        }
+
+                        if (record["EventType"].ToString() == MOVE)
+                        {
+                            if (!asciiSetting.ImportMouseMovement)
+                            {
+                                continue;
+                            }
+
+                            var newRawData = new RawData();
+                            newRawData.SubjectName = currentSubjectName;
+                            DateTime time = DateTime.Parse(record["Timestamp"].ToString());
+                            DateTimeOffset timeOffset = new DateTimeOffset(time);
+                            newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                            newRawData.MousePosX = record["X"].ToObject<int>();
+                            newRawData.MousePosY = record["Y"].ToObject<int>();
+                            RawDataList.Add(newRawData);
+                        }
+                        else
+                        {
+                            if (!asciiSetting.ImportMouseEvents)
+                            {
+                                continue;
+                            }
+
+                            var newEventData = new TrialEventsData();
+                            newEventData.SubjectName = currentSubjectName;
+                            newEventData.TrialSequence = currentTrialSequence;
+                            DateTime time = DateTime.Parse(record["Timestamp"].ToString());
+                            DateTimeOffset timeOffset = new DateTimeOffset(time);
+                            newEventData.EventTime = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
+                            newEventData.EventType = "Mouse";
+                            if (record["EventType"].ToString() == BUTTON_UP)
+                            {
+                                newEventData.EventTask = "Up";
+                            }
+
+                            if (record["EventType"].ToString() == BUTTON_DOWN)
+                            {
+                                newEventData.EventTask = "Down";
+                            }
+
+                            newEventData.EventParam =
+                                String.Format("Mouse: {0} ({1},{2})", record["Button"], record["X"], record["Y"]);
+                            newEventData.EventID = EventList.Count;
+                            EventList.Add(newEventData);
+                        }
                     }
-                    var newRawData = new RawData();
-                    newRawData.SubjectName = currentSubjectName;
-                    DateTime time = DateTime.Parse(record["Timestamp"]);
-                    //time.Subtract(started);
-                    DateTimeOffset timeOffset = new DateTimeOffset(time);
-                    newRawData.Time = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
-                    newRawData.MousePosX = record["X"];
-                    newRawData.MousePosY = record["Y"];
-                    RawDataList.Add(newRawData);
-                }
-                else
-                {
-                    if (!asciiSetting.ImportMouseEvents)
-                    {
-                        continue;
-                    }
-                    var newEventData = new TrialEventsData();
-                    newEventData.SubjectName = currentSubjectName;
-                    newEventData.TrialSequence = currentTrialSequence;
-                    DateTime time = DateTime.Parse(record["Timestamp"]);
-                    DateTimeOffset timeOffset = new DateTimeOffset(time);
-                    newEventData.EventTime = timeOffset.ToUnixTimeMilliseconds() - startedmilis;
-                    newEventData.EventType = "Mouse";
-                    if (record["EventType"] == BUTTON_UP)
-                    {
-                        newEventData.EventTask = "Up";
-                    }
-                    if (record["EventType"] == BUTTON_DOWN)
-                    {
-                        newEventData.EventTask = "Down";
-                    }
-                    newEventData.EventParam = String.Format("Mouse: {0} ({1},{2})", record["Button"], record["X"], record["Y"]);
-                    newEventData.EventID = EventList.Count;
-                    //EventList.Add(newEventData);
                 }
             }
+
             Queries.SaveDataToTable(RawDataList.ToArray(), subjectRawDataTable);
             RawDataList.Clear();
-            MEDataFile.Close();
         }
 
         /// <summary>
@@ -743,306 +791,312 @@ namespace Ogama.Modules.ImportExport.UXI
         ///   The trials are then written into the trial list.
         /// </summary>
         private static void GenerateOgamaSubjectAndTrialList()
-{
-    // Clear foregoing imports.
-    TrialList.Clear();
-    SubjectList.Clear();
-
-    if (RawDataList.Count == 0)
-    {
-        // string message = "The parsing of the log file into OGAMAs " +
-        // "Raw data columns failed. No lines have been successfully read. " +
-        // Environment.NewLine +
-        // "So the trial generation could not be started." +
-        // Environment.NewLine + "Please change the import settings and try again";
-        // ExceptionMethods.ProcessErrorMessage(message);
-        return;
-    }
-
-    // Initializes variables
-    int currentSequence = 0;
-    int lastSequence = -5;
-    string currentSubject = "#";
-    string lastSubject = "#";
-    int overallTrialCounter = 0;
-    int trialCounter = 0;
-    int subjectCounter = 0;
-
-    // Iterate raw data list
-    for (int i = 0; i < RawDataList.Count; i++)
-    {
-        RawData importRow = RawDataList[i];
-        currentSequence = importRow.TrialSequence;
-        currentSubject = importRow.SubjectName;
-
-        // If subject has changed write new subject table entry.
-        if (currentSubject != lastSubject)
         {
-            var newSubjectsData = new SubjectsData();
-            newSubjectsData.SubjectName = currentSubject;
-            SubjectList.Add(newSubjectsData);
+            // Clear foregoing imports.
+            TrialList.Clear();
+            SubjectList.Clear();
 
-            if (subjectCounter > 0)
+            if (RawDataList.Count == 0)
             {
-                TrialsData tempSubjetData = TrialList[overallTrialCounter - 1];
-                tempSubjetData.Duration = (int)(RawDataList[i - 1].Time - tempSubjetData.TrialStartTime);
-                TrialList[overallTrialCounter - 1] = tempSubjetData;
+                // string message = "The parsing of the log file into OGAMAs " +
+                // "Raw data columns failed. No lines have been successfully read. " +
+                // Environment.NewLine +
+                // "So the trial generation could not be started." +
+                // Environment.NewLine + "Please change the import settings and try again";
+                // ExceptionMethods.ProcessErrorMessage(message);
+                return;
             }
 
-            lastSubject = currentSubject;
-            lastSequence = -5;
-            trialCounter = 0;
-            subjectCounter++;
-        }
+            // Initializes variables
+            int currentSequence = 0;
+            int lastSequence = -5;
+            string currentSubject = "#";
+            string lastSubject = "#";
+            int overallTrialCounter = 0;
+            int trialCounter = 0;
+            int subjectCounter = 0;
 
-        // If trial has changed parse the trial information to 
-        // create a trial entry in the trialList.
-        if (currentSequence != lastSequence)
-        {
-            string subject = importRow.SubjectName != null ? importRow.SubjectName : "Subject1";
-            string categorie = importRow.Category != null ? importRow.Category : string.Empty;
-            int trialID = 1;
-
-            string image = "No image file specified";
-
-            switch (detectionSetting.StimuliImportMode)
+            // Iterate raw data list
+            for (int i = 0; i < RawDataList.Count; i++)
             {
-                case StimuliImportModes.UseiViewXMSG:
-                    if (detectionSetting.ImageDictionary.ContainsKey(currentSequence))
+                RawData importRow = RawDataList[i];
+                currentSequence = importRow.TrialSequence;
+                currentSubject = importRow.SubjectName;
+
+                // If subject has changed write new subject table entry.
+                if (currentSubject != lastSubject)
+                {
+                    var newSubjectsData = new SubjectsData();
+                    newSubjectsData.SubjectName = currentSubject;
+                    SubjectList.Add(newSubjectsData);
+
+                    if (subjectCounter > 0)
                     {
-                        image = detectionSetting.ImageDictionary[currentSequence];
+                        TrialsData tempSubjetData = TrialList[overallTrialCounter - 1];
+                        tempSubjetData.Duration = (int) (RawDataList[i - 1].Time - tempSubjetData.TrialStartTime);
+                        TrialList[overallTrialCounter - 1] = tempSubjetData;
                     }
 
-                    break;
-                case StimuliImportModes.UseImportColumn:
-                case StimuliImportModes.UseAssignmentTable:
-                    if (detectionSetting.TrialSequenceToTrialIDAssignments.ContainsKey(currentSequence))
+                    lastSubject = currentSubject;
+                    lastSequence = -5;
+                    trialCounter = 0;
+                    subjectCounter++;
+                }
+
+                // If trial has changed parse the trial information to 
+                // create a trial entry in the trialList.
+                if (currentSequence != lastSequence)
+                {
+                    string subject = importRow.SubjectName != null ? importRow.SubjectName : "Subject1";
+                    string categorie = importRow.Category != null ? importRow.Category : string.Empty;
+                    int trialID = 1;
+
+                    string image = "No image file specified";
+
+                    switch (detectionSetting.StimuliImportMode)
                     {
-                        trialID = detectionSetting.TrialSequenceToTrialIDAssignments[currentSequence];
-                        if (detectionSetting.TrialIDToImageAssignments.ContainsKey(trialID))
+                        case StimuliImportModes.UseiViewXMSG:
+                            if (detectionSetting.ImageDictionary.ContainsKey(currentSequence))
+                            {
+                                image = detectionSetting.ImageDictionary[currentSequence];
+                            }
+
+                            break;
+                        case StimuliImportModes.UseImportColumn:
+                        case StimuliImportModes.UseAssignmentTable:
+                            if (detectionSetting.TrialSequenceToTrialIDAssignments.ContainsKey(currentSequence))
+                            {
+                                trialID = detectionSetting.TrialSequenceToTrialIDAssignments[currentSequence];
+                                if (detectionSetting.TrialIDToImageAssignments.ContainsKey(trialID))
+                                {
+                                    image = detectionSetting.TrialIDToImageAssignments[trialID];
+                                }
+                            }
+
+                            break;
+                        case StimuliImportModes.SearchForImageEnding:
+                            if (detectionSetting.ImageDictionary.ContainsKey(currentSequence))
+                            {
+                                image = detectionSetting.ImageDictionary[currentSequence];
+                            }
+
+                            break;
+                    }
+
+                    // Add empty trial to sequence numbering.
+                    if (detectionSetting.StimuliImportMode != StimuliImportModes.UseImportColumn
+                        && image == "No image file specified")
+                    {
+                        if (!detectionSetting.TrialSequenceToTrialIDAssignments.ContainsKey(currentSequence))
                         {
-                            image = detectionSetting.TrialIDToImageAssignments[trialID];
+                            detectionSetting.TrialSequenceToTrialIDAssignments.Add(currentSequence, 0);
                         }
                     }
 
-                    break;
-                case StimuliImportModes.SearchForImageEnding:
-                    if (detectionSetting.ImageDictionary.ContainsKey(currentSequence))
+                    long time = 0;
+                    switch (detectionSetting.TrialImportMode)
                     {
-                        image = detectionSetting.ImageDictionary[currentSequence];
+                        ////// Use the table timing
+                        ////if (detectionSetting.TrialSequenceToStarttimeAssignments.ContainsKey(currentSequence))
+                        ////{
+                        ////  time = detectionSetting.TrialSequenceToStarttimeAssignments[currentSequence];
+                        ////}
+                        //// break;
+                        case TrialSequenceImportModes.UseAssignmentTable:
+                        case TrialSequenceImportModes.UseMSGLines:
+                        case TrialSequenceImportModes.UseImportColumn:
+
+                            // Use the raw data timing
+                            time = importRow.Time;
+                            break;
                     }
 
-                    break;
-            }
+                    // Create trial row
+                    var newTrialData = new TrialsData();
+                    newTrialData.SubjectName = subject;
+                    newTrialData.TrialSequence = currentSequence;
+                    newTrialData.TrialID = trialID;
+                    newTrialData.TrialName = image;
+                    newTrialData.Category = categorie;
+                    newTrialData.TrialStartTime = time;
+                    newTrialData.Duration = -1;
+                    TrialList.Add(newTrialData);
 
-            // Add empty trial to sequence numbering.
-            if (detectionSetting.StimuliImportMode != StimuliImportModes.UseImportColumn
-                && image == "No image file specified")
-            {
-                if (!detectionSetting.TrialSequenceToTrialIDAssignments.ContainsKey(currentSequence))
-                {
-                    detectionSetting.TrialSequenceToTrialIDAssignments.Add(currentSequence, 0);
+                    lastSequence = currentSequence;
+                    trialCounter++;
+                    overallTrialCounter++;
+
+                    // Calculate trial duration for foregoing trial.
+                    if (trialCounter > 1)
+                    {
+                        TrialsData tempSubjetData = TrialList[overallTrialCounter - 2];
+                        int duration = 0;
+                        switch (detectionSetting.TrialImportMode)
+                        {
+                            case TrialSequenceImportModes.UseAssignmentTable:
+
+                                // Use the table timing
+                                duration = (int) (time - tempSubjetData.TrialStartTime);
+                                break;
+                            case TrialSequenceImportModes.UseMSGLines:
+                            case TrialSequenceImportModes.UseImportColumn:
+
+                                // Use the raw data timing
+                                duration = (int) (RawDataList[i].Time - tempSubjetData.TrialStartTime);
+                                break;
+                        }
+
+                        //// If there is lot of time (>200ms) left between last and current trial
+                        //// don´t use the space in between for the duration value.
+                        ////if (rawDataList[i].Time - rawDataList[i - 1].Time > 200)
+                        ////{
+                        ////  duration = (int)(rawDataList[i - 1].Time - tempSubjetData.TrialStartTime);
+                        ////}
+                        tempSubjetData.Duration = duration;
+                        TrialList[overallTrialCounter - 2] = tempSubjetData;
+                    }
                 }
             }
 
-            long time = 0;
-            switch (detectionSetting.TrialImportMode)
+            // Reached end of rawdatalist, so add last trial duration value from last entry
+            if (trialCounter >= 1)
             {
-                ////// Use the table timing
-                ////if (detectionSetting.TrialSequenceToStarttimeAssignments.ContainsKey(currentSequence))
-                ////{
-                ////  time = detectionSetting.TrialSequenceToStarttimeAssignments[currentSequence];
-                ////}
-                //// break;
-                case TrialSequenceImportModes.UseAssignmentTable:
-                case TrialSequenceImportModes.UseMSGLines:
-                case TrialSequenceImportModes.UseImportColumn:
-
-                    // Use the raw data timing
-                    time = importRow.Time;
-                    break;
-            }
-
-            // Create trial row
-            var newTrialData = new TrialsData();
-            newTrialData.SubjectName = subject;
-            newTrialData.TrialSequence = currentSequence;
-            newTrialData.TrialID = trialID;
-            newTrialData.TrialName = image;
-            newTrialData.Category = categorie;
-            newTrialData.TrialStartTime = time;
-            newTrialData.Duration = -1;
-            TrialList.Add(newTrialData);
-
-            lastSequence = currentSequence;
-            trialCounter++;
-            overallTrialCounter++;
-
-            // Calculate trial duration for foregoing trial.
-            if (trialCounter > 1)
-            {
-                TrialsData tempSubjetData = TrialList[overallTrialCounter - 2];
-                int duration = 0;
-                switch (detectionSetting.TrialImportMode)
-                {
-                    case TrialSequenceImportModes.UseAssignmentTable:
-
-                        // Use the table timing
-                        duration = (int)(time - tempSubjetData.TrialStartTime);
-                        break;
-                    case TrialSequenceImportModes.UseMSGLines:
-                    case TrialSequenceImportModes.UseImportColumn:
-
-                        // Use the raw data timing
-                        duration = (int)(RawDataList[i].Time - tempSubjetData.TrialStartTime);
-                        break;
-                }
-
-                //// If there is lot of time (>200ms) left between last and current trial
-                //// don´t use the space in between for the duration value.
-                ////if (rawDataList[i].Time - rawDataList[i - 1].Time > 200)
-                ////{
-                ////  duration = (int)(rawDataList[i - 1].Time - tempSubjetData.TrialStartTime);
-                ////}
-                tempSubjetData.Duration = duration;
-                TrialList[overallTrialCounter - 2] = tempSubjetData;
+                TrialsData tempSubjetData = TrialList[overallTrialCounter - 1];
+                tempSubjetData.Duration =
+                    (int) (RawDataList[RawDataList.Count - 1].Time - tempSubjetData.TrialStartTime);
+                TrialList[overallTrialCounter - 1] = tempSubjetData;
             }
         }
-    }
 
-    // Reached end of rawdatalist, so add last trial duration value from last entry
-    if (trialCounter >= 1)
-    {
-        TrialsData tempSubjetData = TrialList[overallTrialCounter - 1];
-        tempSubjetData.Duration = (int)(RawDataList[RawDataList.Count - 1].Time - tempSubjetData.TrialStartTime);
-        TrialList[overallTrialCounter - 1] = tempSubjetData;
-    }
-}
-
-/// <summary>
-///   This method writes the data that is written in the lists during
-///   import to OGAMAs dataset.
-///   If this could be successfully done the whole new data is
-///   written to the database (.mdf).
-/// </summary>
-/// <returns>
-///   <strong>True</strong> if successful, otherwise
-///   <strong>false</strong>.
-/// </returns>
-private static bool SaveImportIntoTablesAndDB()
-{
-    int subjectErrorCounter = 0;
-    try
-    {
-            SubjectsData subject = SubjectList[0];
-            string testSub = subject.SubjectName;
-            if (!Queries.ValidateSubjectName(ref testSub, false))
-            {
-                string message = testSub + " subject has unallowed names or "
-                                                     + "their names already exists in the experiments database." + Environment.NewLine
-                                                     + "Please modify your import file and change the subject name, or delete "
-                                                     + "the existing database entry.";
-                ExceptionMethods.ProcessMessage("Unallowed subject names", message);
-                }
-
-            // Creates an empty raw data table in the mdf database
-            Queries.CreateRawDataTableInDB(subject.SubjectName);
-
-            // Push changes to database
-            Document.ActiveDocument.DocDataSet.AcceptChanges();
-
-            // Write RawDataTable into File with Bulk Statement
-            Queries.WriteRawDataWithBulkStatement(subject.SubjectName);
-
-            // Save subject information to dataset
-            if (!Queries.WriteSubjectToDataSet(subject))
-            {
-                throw new DataException("The new subject information could not be written into the dataset.");
-            }
-
-            // Save trial information to dataset
-            if (!Queries.WriteTrialsDataListToDataSet(TrialList))
-            {
-                throw new DataException("The new trials table could not be written into the dataset.");
-            }
-
-            if (!Queries.WriteTrialEventsDataListToDataSet(EventList))
-            {
-                throw new DataException("The new trial events could not be written into the dataset.");
-            }
-
-        Document.ActiveDocument.DocDataSet.EnforceConstraints = false;
-
-        Document.ActiveDocument.DocDataSet.TrialEventsAdapter.Update(Document.ActiveDocument.DocDataSet.TrialEvents);
-
-        // Update subjects and trials table in the mdf database
-        int affectedRows = Document.ActiveDocument.DocDataSet.TrialsAdapter.Update(Document.ActiveDocument.DocDataSet.Trials);
-        Console.WriteLine(affectedRows + "Trial updates written");
-        affectedRows = Document.ActiveDocument.DocDataSet.SubjectsAdapter.Update(Document.ActiveDocument.DocDataSet.Subjects);
-        Console.WriteLine(affectedRows + "Subject updates written");
-
-        Document.ActiveDocument.DocDataSet.AcceptChanges();
-        Document.ActiveDocument.DocDataSet.CreateRawDataAdapters();
-    }
-    catch (Exception ex)
-    {
-        ExceptionMethods.HandleException(ex);
-
-        // CleanUp
-        // First reject changes (remove trial and subject table modifications)
-        Document.ActiveDocument.DocDataSet.RejectChanges();
-
-        foreach (SubjectsData subject in SubjectList)
+        /// <summary>
+        ///   This method writes the data that is written in the lists during
+        ///   import to OGAMAs dataset.
+        ///   If this could be successfully done the whole new data is
+        ///   written to the database (.mdf).
+        /// </summary>
+        /// <returns>
+        ///   <strong>True</strong> if successful, otherwise
+        ///   <strong>false</strong>.
+        /// </returns>
+        private static bool SaveImportIntoTablesAndDB()
         {
-            // Remove eventually added raw data table in dataset
-            if (Document.ActiveDocument.DocDataSet.Tables.Contains(subject.SubjectName + "Rawdata"))
+            int subjectErrorCounter = 0;
+            try
             {
-                Document.ActiveDocument.DocDataSet.Tables.Remove(subject.SubjectName + "Rawdata");
+                SubjectsData subject = SubjectList[0];
+                string testSub = subject.SubjectName;
+                if (!Queries.ValidateSubjectName(ref testSub, false))
+                {
+                    string message = testSub + " subject has unallowed names or "
+                                             + "their names already exists in the experiments database." +
+                                             Environment.NewLine
+                                             + "Please modify your import file and change the subject name, or delete "
+                                             + "the existing database entry.";
+                    ExceptionMethods.ProcessMessage("Unallowed subject names", message);
+                }
+
+                // Creates an empty raw data table in the mdf database
+                Queries.CreateRawDataTableInDB(subject.SubjectName);
+
+                // Push changes to database
+                Document.ActiveDocument.DocDataSet.AcceptChanges();
+
+                // Write RawDataTable into File with Bulk Statement
+                Queries.WriteRawDataWithBulkStatement(subject.SubjectName);
+
+                // Save subject information to dataset
+                if (!Queries.WriteSubjectToDataSet(subject))
+                {
+                    throw new DataException("The new subject information could not be written into the dataset.");
+                }
+
+                // Save trial information to dataset
+                if (!Queries.WriteTrialsDataListToDataSet(TrialList))
+                {
+                    throw new DataException("The new trials table could not be written into the dataset.");
+                }
+
+                if (!Queries.WriteTrialEventsDataListToDataSet(EventList))
+                {
+                    throw new DataException("The new trial events could not be written into the dataset.");
+                }
+
+                Document.ActiveDocument.DocDataSet.EnforceConstraints = false;
+
+                Document.ActiveDocument.DocDataSet.TrialEventsAdapter.Update(Document.ActiveDocument.DocDataSet
+                    .TrialEvents);
+
+                // Update subjects and trials table in the mdf database
+                int affectedRows =
+                    Document.ActiveDocument.DocDataSet.TrialsAdapter.Update(Document.ActiveDocument.DocDataSet.Trials);
+                Console.WriteLine(affectedRows + "Trial updates written");
+                affectedRows =
+                    Document.ActiveDocument.DocDataSet.SubjectsAdapter.Update(Document.ActiveDocument.DocDataSet
+                        .Subjects);
+                Console.WriteLine(affectedRows + "Subject updates written");
+
+                Document.ActiveDocument.DocDataSet.AcceptChanges();
+                Document.ActiveDocument.DocDataSet.CreateRawDataAdapters();
+            }
+            catch (Exception ex)
+            {
+                ExceptionMethods.HandleException(ex);
+
+                // CleanUp
+                // First reject changes (remove trial and subject table modifications)
+                Document.ActiveDocument.DocDataSet.RejectChanges();
+
+                foreach (SubjectsData subject in SubjectList)
+                {
+                    // Remove eventually added raw data table in dataset
+                    if (Document.ActiveDocument.DocDataSet.Tables.Contains(subject.SubjectName + "Rawdata"))
+                    {
+                        Document.ActiveDocument.DocDataSet.Tables.Remove(subject.SubjectName + "Rawdata");
+                    }
+
+                    // Remove raw data table in database file (.mdf)
+                    Queries.DeleteRawDataTableInDB(subject.SubjectName);
+                }
+
+                return false;
+            }
+            finally
+            {
+                Document.ActiveDocument.DocDataSet.EnforceConstraints = true;
             }
 
-            // Remove raw data table in database file (.mdf)
-            Queries.DeleteRawDataTableInDB(subject.SubjectName);
+            return true;
         }
-
-        return false;
-    }
-    finally
-    {
-        Document.ActiveDocument.DocDataSet.EnforceConstraints = true;
-    }
-
-    return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Small helping Methods                                                     //
 ///////////////////////////////////////////////////////////////////////////////
 
-/// <summary>
-/// Saves the current import setting to a OGAMA import settings file.
-///   Extension ".ois"
-/// </summary>
-/// <param name="filePath">
-/// A <see cref="string"/> with the path to the
-///   OGAMA target import settings xml file.
-/// </param>
-private static void SerializeSettings(string filePath)
-{
-    try
-    {
-        using (TextWriter writer = new StreamWriter(filePath))
+        /// <summary>
+        /// Saves the current import setting to a OGAMA import settings file.
+        ///   Extension ".ois"
+        /// </summary>
+        /// <param name="filePath">
+        /// A <see cref="string"/> with the path to the
+        ///   OGAMA target import settings xml file.
+        /// </param>
+        private static void SerializeSettings(string filePath)
         {
-            var settings = new MergedSettings { AsciiSetting = null, DetectionSetting = detectionSetting };
+            try
+            {
+                using (TextWriter writer = new StreamWriter(filePath))
+                {
+                    var settings = new MergedSettings {AsciiSetting = null, DetectionSetting = detectionSetting};
 
-            var serializer = new XmlSerializer(typeof(MergedSettings));
-            serializer.Serialize(writer, settings);
+                    var serializer = new XmlSerializer(typeof(MergedSettings));
+                    serializer.Serialize(writer, settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionMethods.HandleException(ex);
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        ExceptionMethods.HandleException(ex);
-    }
-}
 
         #endregion
     }
