@@ -36,12 +36,14 @@
             this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.checkBox4 = new System.Windows.Forms.CheckBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.directoriesView = new System.Windows.Forms.DataGridView();
             this.Import = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.FolderName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
+            this.sqLiteTadShapeGroups1 = new Ogama.DataSet.SQLiteOgamaDataSetTableAdapters.SQLiteTadShapeGroups();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.directoriesView)).BeginInit();
             this.SuspendLayout();
@@ -57,17 +59,19 @@
             this.tableLayoutPanel1.Controls.Add(this.checkBox2, 1, 3);
             this.tableLayoutPanel1.Controls.Add(this.checkBox3, 1, 2);
             this.tableLayoutPanel1.Controls.Add(this.checkBox4, 1, 4);
+            this.tableLayoutPanel1.Controls.Add(this.label1, 1, 5);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 20);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 5;
+            this.tableLayoutPanel1.RowCount = 6;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(779, 146);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 8F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(779, 173);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
             // preferredEye
@@ -142,14 +146,24 @@
             this.checkBox4.Text = "Import keyboard events";
             this.checkBox4.UseVisualStyleBackColor = true;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(238, 152);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(528, 21);
+            this.label1.TabIndex = 16;
+            this.label1.Text = "Too many mouse/keyboard events in a trial may cause performance issues during pla" +
+    "yback.";
+            // 
             // button2
             // 
             this.button2.Dock = System.Windows.Forms.DockStyle.Top;
             this.button2.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button2.Location = new System.Drawing.Point(0, 146);
+            this.button2.Location = new System.Drawing.Point(0, 173);
             this.button2.Margin = new System.Windows.Forms.Padding(4, 20, 4, 4);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(779, 28);
+            this.button2.Size = new System.Drawing.Size(779, 31);
             this.button2.TabIndex = 2;
             this.button2.Text = "Import";
             this.button2.UseVisualStyleBackColor = true;
@@ -165,7 +179,7 @@
             this.Import,
             this.FolderName});
             this.directoriesView.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.directoriesView.Location = new System.Drawing.Point(0, 210);
+            this.directoriesView.Location = new System.Drawing.Point(0, 241);
             this.directoriesView.Margin = new System.Windows.Forms.Padding(4);
             this.directoriesView.Name = "directoriesView";
             this.directoriesView.Size = new System.Drawing.Size(779, 335);
@@ -189,7 +203,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(7, 181);
+            this.button1.Location = new System.Drawing.Point(0, 211);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 4;
@@ -199,7 +213,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(88, 180);
+            this.button3.Location = new System.Drawing.Point(81, 210);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(102, 23);
             this.button3.TabIndex = 5;
@@ -207,11 +221,15 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
+            // sqLiteTadShapeGroups1
+            // 
+            this.sqLiteTadShapeGroups1.ClearBeforeFill = true;
+            // 
             // UXImportDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(779, 545);
+            this.ClientSize = new System.Drawing.Size(779, 576);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.directoriesView);
@@ -243,5 +261,7 @@
         private System.Windows.Forms.CheckBox checkBox2;
         private System.Windows.Forms.CheckBox checkBox3;
         private System.Windows.Forms.CheckBox checkBox4;
+        private System.Windows.Forms.Label label1;
+        private DataSet.SQLiteOgamaDataSetTableAdapters.SQLiteTadShapeGroups sqLiteTadShapeGroups1;
     }
 }
