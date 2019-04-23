@@ -11,6 +11,8 @@
 // <author>Adrian Voßkühler</author>
 // <email>adrian@ogama.net</email>
 
+using Ogama.Modules.ImportExport.UXI;
+
 namespace Ogama.MainWindow
 {
   using System;
@@ -749,7 +751,7 @@ namespace Ogama.MainWindow
           case Tasks.Import:
             if (this.CreateDatabaseView())
             {
-              ImportRawData.Start(this);
+              UXImport.Start(this);
             }
 
             break;
