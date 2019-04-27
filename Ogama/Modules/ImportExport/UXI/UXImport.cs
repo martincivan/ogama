@@ -414,9 +414,10 @@ namespace Ogama.Modules.ImportExport.UXI
                 progress.Report(++p);
             }
 
-            string message = "Import data successfully written to database." + Environment.NewLine
-                                                                             + "Please don´t forget to move the stimuli images to the SlideResources subfolder"
-                                                                             + "of the experiment, otherwise no images will be shown.";
+            string message = "Import data was successfull." + Environment.NewLine
+                                                                             + "Please don´t forget to save data in database module." +
+                                                            Environment.NewLine
+                                                                             + "Also do not forget that some modules (for example export to AVI) requires defined screen recording slide, that can be created in Design module.";
             ExceptionMethods.ProcessMessage("Success", message);
         }
 
