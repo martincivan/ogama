@@ -391,9 +391,17 @@ namespace Ogama.Modules.ImportExport.UXI
                 Task videoTask = null;
                 if (importVideo)
                 {
-                    videoTask = ImportVideo(asciiSetting.GetScreenVideoPath(),
-                        Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath,
-                            detectionSetting.SubjectName + "-" + "0.avi"), token);
+                    if (File.Exists(asciiSetting.GetScreenVideoAVIPath()))
+                    {
+                        File.Copy(asciiSetting.GetScreenVideoAVIPath(), Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath,
+                            detectionSetting.SubjectName + "-" + "0.avi"));
+                    }
+                    else
+                    {
+                        videoTask = ImportVideo(asciiSetting.GetScreenVideoMP4Path(),
+                            Path.Combine(Document.ActiveDocument.ExperimentSettings.ThumbsPath,
+                                detectionSetting.SubjectName + "-" + "0.avi"), token);
+                    }
                 }
 
                 asciiSetting.PreferredEye = preferredEye;

@@ -595,7 +595,12 @@ namespace Ogama.Modules.ImportExport.UXI
             return folder + "\\" + MEDATA_FILE + ".json";
         }
 
-        public string GetScreenVideoPath()
+        public string GetScreenVideoAVIPath()
+        {
+            return folder + "\\" + SCDATA_FILE + ".avi";
+        }
+
+        public string GetScreenVideoMP4Path()
         {
             return folder + "\\" + SCDATA_FILE + ".mp4";
         }
