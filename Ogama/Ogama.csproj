@@ -14,7 +14,7 @@
     <ManifestCertificateThumbprint>878A9DFECB151123BEEC507826D111BC0E7CD32E</ManifestCertificateThumbprint>
     <ManifestKeyFile>
     </ManifestKeyFile>
-    <GenerateManifests>false</GenerateManifests>
+    <GenerateManifests>true</GenerateManifests>
     <SignManifests>false</SignManifests>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>
@@ -22,8 +22,16 @@
     <ApplicationIcon>Resources\Ogama.ico</ApplicationIcon>
     <TargetZone>LocalIntranet</TargetZone>
     <StartupObject>Ogama.Program</StartupObject>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <PublishUrl>C:\Dokumente und Einstellungen\Adrian\Eigene Dateien\Universitt\Promotion\VSProjects\GMV\SQLGazeAndMouseViewer\publish\</PublishUrl>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <PublishUrl>C:\Users\Pouzivatel\Documents\testbuild\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -37,18 +45,13 @@
     <ProductName>Gaze and Mouse Viewer</ProductName>
     <PublisherName>Freie Universitaet Berlin</PublisherName>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
+    <AutorunEnabled>true</AutorunEnabled>
     <ApplicationRevision>2</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <BootstrapperComponentsLocation>Relative</BootstrapperComponentsLocation>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation />
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
-    <NuGetPackageImportStamp>415c3f62</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -142,16 +145,17 @@
       <HintPath>..\Libs\Managed\DirectShowLib-2005.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.1.2\lib\net40\EntityFramework.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.1.2\lib\net40\EntityFramework.SqlServer.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="EtApi, Version=1.0.3154.19330, Culture=neutral, PublicKeyToken=3c8a8059c193781b, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libs\Managed\EtApi.dll</HintPath>
+    </Reference>
+    <Reference Include="FFmpeg.NET, Version=3.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\xFFmpeg.NET.3.1.0\lib\netstandard2.0\FFmpeg.NET.dll</HintPath>
     </Reference>
     <Reference Include="Haytham.ExtData">
       <HintPath>..\Libs\Managed\Haytham.ExtData.dll</HintPath>
@@ -160,6 +164,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libs\Managed\Interop.ASLSERIALOUTLIB2Lib.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Data.ConnectionUI, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libs\Managed\Microsoft.Data.ConnectionUI.dll</HintPath>
@@ -216,21 +221,20 @@
     <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.96.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.96.0\lib\net40\System.Data.SQLite.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="System.Data.SQLite, Version=1.0.110.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.110.0\lib\net46\System.Data.SQLite.dll</HintPath>
     </Reference>
-    <Reference Include="System.Data.SQLite.EF6, Version=1.0.96.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.96.0\lib\net40\System.Data.SQLite.EF6.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="System.Data.SQLite.EF6, Version=1.0.110.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.110.0\lib\net46\System.Data.SQLite.EF6.dll</HintPath>
     </Reference>
-    <Reference Include="System.Data.SQLite.Linq, Version=1.0.96.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.96.0\lib\net40\System.Data.SQLite.Linq.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="System.Data.SQLite.Linq, Version=1.0.110.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.110.0\lib\net46\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Deployment" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
@@ -292,6 +296,21 @@
     </Compile>
     <Compile Include="Modules\AttentionMap\GradientExtensions.cs" />
     <Compile Include="Modules\Common\CustomEventArgs\TrackStatusDataChangedEventArgs.cs" />
+    <Compile Include="Modules\ImportExport\UXI\ProgressForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Modules\ImportExport\UXI\ProgressForm.Designer.cs">
+      <DependentUpon>ProgressForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modules\ImportExport\UXI\SampleRuProgressBar1.cs" />
+    <Compile Include="Modules\ImportExport\UXI\UXImportDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Modules\ImportExport\UXI\UXImportDialog.Designer.cs">
+      <DependentUpon>UXImportDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modules\ImportExport\UXI\UXISettings.cs" />
+    <Compile Include="Modules\ImportExport\UXI\UXImport.cs" />
     <Compile Include="Modules\Recording\ASLInterface\HowToActivateAsl.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1257,6 +1276,12 @@
       <DependentUpon>ConvertDatabaseSplash.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Modules\ImportExport\UXI\ProgressForm.resx">
+      <DependentUpon>ProgressForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Modules\ImportExport\UXI\UXImportDialog.resx">
+      <DependentUpon>UXImportDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Modules\Recording\ASLInterface\HowToActivateAsl.resx">
       <DependentUpon>HowToActivateAsl.cs</DependentUpon>
     </EmbeddedResource>
@@ -2166,6 +2191,7 @@
       <Private>True</Private>
     </COMReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -2185,11 +2211,13 @@
     <PreBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\FFmpeg.Win64.Static.3.3.3.1\build\FFmpeg.Win64.Static.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpeg.Win64.Static.3.3.3.1\build\FFmpeg.Win64.Static.targets'))" />
   </Target>
+  <Import Project="..\packages\FFmpeg.Win64.Static.3.3.3.1\build\FFmpeg.Win64.Static.targets" Condition="Exists('..\packages\FFmpeg.Win64.Static.3.3.3.1\build\FFmpeg.Win64.Static.targets')" />
 </Project>
